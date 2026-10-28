@@ -1,0 +1,40 @@
+require "test_helper"
+
+class AnsiTest < Minitest::Test
+  def test_removes_sgr_colors
+    assert_equal "ok", Oops::Ansi.strip("\e[32mok\e[0m")
+  end
+
+  def test_removes_osc_with_bel_and_st
+    assert_equal "ab", Oops::Ansi.strip("a\e]0;title\ab\e]52;c;xx\e\\")
+  end
+
+  def test_removes_apc
+    assert_equal "ab", Oops::Ansi.strip("a\e_oops;start;1\e\\b")
+  end
+
+  def test_carriage_return_keeps_last_state_of_line
+    assert_equal "100%\ndone", Oops::Ansi.strip("10%\r50%\r100%\ndone")
+  end
+
+  def test_backspace_deletes_previous_char
+    assert_equal "ab", Oops::Ansi.strip("abc\b")
+  end
+
+  def test_clear_screen_sequences_removed
+    assert_equal "x", Oops::Ansi.strip("\e[H\e[2J\e[3Jx")
+  end
+
+  def test_crlf_is_single_newline
+    assert_equal "a\nb\n", Oops::Ansi.strip("a\r\nb\r\n")
+  end
+
+  def test_binary_input_with_invalid_utf8_does_not_raise
+    input = "a\xFF\e[1mb\e[0m".b
+    assert_equal "a\xFFb".b, Oops::Ansi.strip(input)
+  end
+
+  def test_backspace_deletes_whole_multibyte_char
+    assert_equal "あ", Oops::Ansi.strip("あい\b")
+  end
+end
