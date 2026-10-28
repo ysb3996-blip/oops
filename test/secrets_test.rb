@@ -70,4 +70,30 @@ class SecretsTest < Minitest::Test
     assert_equal ["git clone git@github.com:foo/bar.git", 0], mask("git clone git@github.com:foo/bar.git")
     assert_equal ["to [secret]: hi", 1], mask("to ysb@example.com: hi")
   end
+
+  def test_escaped_quote_inside_quoted_value
+    assert_equal ['password="[secret]" x', 1], mask('password="ab\\"cd ef" x')
+  end
+
+  def test_unterminated_quote_does_not_leak
+    assert_equal ['password="[secret]', 1], mask('password="abc')
+  end
+
+  # Guards against quadratic matching; bounds are loose to avoid flakiness.
+  def test_long_single_line_inputs_stay_linear
+    ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},'].each do |unit|
+      small = unit * (500_000 / unit.size)
+      big = unit * (2_000_000 / unit.size)
+      assert_operator elapsed { mask(small) }, :<, 2.0
+      assert_operator elapsed { mask(big) }, :<, 8.0
+    end
+  end
+
+  private
+
+  def elapsed
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    yield
+    Process.clock_gettime(Process::CLOCK_MONOTONIC) - start
+  end
 end

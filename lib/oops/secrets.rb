@@ -27,10 +27,14 @@ module Oops
         "(?<secret>#{OCTET}(?:\\.#{OCTET}){3})(?!\\w|\\.\\d)"
       ),
       # name containing key/token/secret/password/passwd/pwd, then = or :
-      # Quoted values are masked through the closing quote; unquoted values stop
-      # at whitespace, quotes, , ; and & (so query strings keep each pair apart).
-      /(?<![\w.-])[\w.-]*(?:key|token|secret|password|passwd|pwd)[\w.-]*["']?[ \t]*[=:][ \t]*["']?
-        (?<secret>(?!\[secret\])(?:(?<=")[^"\n]+(?=")|(?<=')[^'\n]+(?=')|[^\s"',;&]+))/ix
+      # Quoted values run to the matching closing quote (backslash escapes
+      # allowed) using an atomic body, so matching stays linear; an unterminated
+      # quote masks to the end of the line. Unquoted values stop at whitespace,
+      # quotes, , ; and & (so query strings keep each pair apart).
+      /(?<![\w.-])[\w.-]*(?:key|token|secret|password|passwd|pwd)[\w.-]*["']?[ \t]*[=:][ \t]*
+        (?<q>["'])?
+        (?<secret>(?!\[secret\])(?(<q>)(?>\\.|(?!\k<q>)[^\\\n])++|[^\s"',;&]+))
+        \k<q>?/ix
     ].freeze
 
     module_function
@@ -53,10 +57,11 @@ module Oops
     def replacement(match)
       return TOKEN unless match.names.include?("secret") && match[:secret]
 
+      # Byte offsets: char offsets would cost O(n) per match on long input.
       whole = match[0]
-      from = match.begin(:secret) - match.begin(0)
-      to = match.end(:secret) - match.begin(0)
-      whole[0, from] + TOKEN + whole[to..]
+      start = match.byteoffset(0).first
+      from, to = match.byteoffset(:secret).map { |offset| offset - start }
+      whole.byteslice(0, from) + TOKEN + whole.byteslice(to..)
     end
   end
 end
