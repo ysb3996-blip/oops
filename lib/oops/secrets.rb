@@ -18,7 +18,7 @@ module Oops
       %r{Authorization:[ \t]*(?:Bearer|Basic)[ \t]+(?<secret>[\w.~+/=-]+)}i,
       /-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----/m,
       %r{\b[a-z][a-z0-9+.-]*://(?<secret>[^\s/@:]+:[^\s/@]+)@}i,         # URL userinfo
-      /[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+/,             # email
+      %r{[A-Za-z0-9._%+-]+@(?>[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)(?!:[\w~/])}, # email, not scp-style git@host:path
       # Public IPv4: not private/loopback/unspecified, and not part of a longer
       # dotted number such as a version string (1.2.3.4.5).
       Regexp.new(
@@ -27,8 +27,10 @@ module Oops
         "(?<secret>#{OCTET}(?:\\.#{OCTET}){3})(?!\\w|\\.\\d)"
       ),
       # name containing key/token/secret/password/passwd/pwd, then = or :
+      # Quoted values are masked through the closing quote; unquoted values stop
+      # at whitespace, quotes, , ; and & (so query strings keep each pair apart).
       /(?<![\w.-])[\w.-]*(?:key|token|secret|password|passwd|pwd)[\w.-]*["']?[ \t]*[=:][ \t]*["']?
-        (?<secret>(?!\[secret\])[^\s"',;]+)/ix
+        (?<secret>(?!\[secret\])(?:(?<=")[^"\n]+(?=")|(?<=')[^'\n]+(?=')|[^\s"',;&]+))/ix
     ].freeze
 
     module_function

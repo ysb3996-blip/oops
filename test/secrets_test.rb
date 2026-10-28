@@ -54,4 +54,20 @@ class SecretsTest < Minitest::Test
     assert_equal 1, count
     assert_includes text, "token=[secret]"
   end
+
+  def test_query_string_pairs_each_masked
+    assert_equal ["secret=[secret]&token=[secret]", 2], mask("secret=a&token=b")
+    assert_equal ["?access_token=[secret]&refresh_token=[secret]", 2], mask("?access_token=abc&refresh_token=xyz")
+  end
+
+  def test_quoted_values_masked_whole
+    assert_equal ['password: "[secret]"', 1], mask('password: "two words"')
+    assert_equal ["pass_key='[secret]'", 1], mask("pass_key='a b'")
+    assert_equal ['{"api_key": "[secret]"}', 1], mask('{"api_key": "abc123"}')
+  end
+
+  def test_git_scp_remote_not_email
+    assert_equal ["git clone git@github.com:foo/bar.git", 0], mask("git clone git@github.com:foo/bar.git")
+    assert_equal ["to [secret]: hi", 1], mask("to ysb@example.com: hi")
+  end
 end
