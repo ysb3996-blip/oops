@@ -1,4 +1,7 @@
 require_relative "oops/version"
 require_relative "oops/ansi"
 require_relative "oops/secrets"
+require_relative "oops/record"
+require_relative "oops/paths"
+require_relative "oops/config"
 require_relative "oops/cli"
