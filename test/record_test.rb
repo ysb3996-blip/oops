@@ -26,6 +26,13 @@ class RecordTest < Minitest::Test
     assert Oops::Record::ParseError < StandardError
   end
 
+  def test_invalid_utf8_in_cmd_and_cwd_does_not_crash
+    r = Oops::Record.new(seq: 1, cmd: "cat caf\xe9".b, cwd: "/tmp/caf\xe9", output: "".b)
+    back = Oops::Record.from_json_line(r.to_json_line)
+    assert_equal "cat caf\uFFFD", back.cmd
+    assert_equal "/tmp/caf\uFFFD", back.cwd
+  end
+
   def test_oops_self
     assert Oops::Record.new(cmd: "oops err --github").oops_self?
     assert Oops::Record.new(cmd: "/opt/x/exe/oops err").oops_self?

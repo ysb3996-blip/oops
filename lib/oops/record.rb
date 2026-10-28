@@ -1,5 +1,4 @@
 require "json"
-require "base64"
 
 module Oops
   # One captured command with its output, stored as a single JSON line.
@@ -7,9 +6,18 @@ module Oops
                       :dropped_bytes, :fullscreen, keyword_init: true) do
     def to_json_line
       h = to_h
-      h[:output] = Base64.strict_encode64(output.to_s.b)
+      h[:cmd] = utf8_clean(cmd)
+      h[:cwd] = utf8_clean(cwd)
+      h[:output] = [output.to_s.b].pack("m0")
       "#{JSON.generate(h)}\n"
     end
+
+    def utf8_clean(value)
+      return nil if value.nil?
+
+      value.to_s.dup.force_encoding(Encoding::UTF_8).scrub
+    end
+    private :utf8_clean
 
     def oops_self?
       cmd.to_s.match?(%r{\A\s*(\S*/)?oops(\s|\z)})
@@ -20,7 +28,7 @@ module Oops
       raise Record::ParseError, "record is not an object" unless h.is_a?(Hash)
 
       new(**h.slice(*members.map(&:to_s)).transform_keys(&:to_sym),
-          output: Base64.strict_decode64(h["output"].to_s))
+          output: h["output"].to_s.unpack1("m0"))
     rescue JSON::ParserError, ArgumentError => e
       raise Record::ParseError, e.message
     end

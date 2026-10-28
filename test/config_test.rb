@@ -39,6 +39,16 @@ class ConfigTest < Minitest::Test
     end
   end
 
+  def test_blank_secret_is_skipped_with_warning
+    Dir.mktmpdir do |d|
+      File.write("#{d}/c.yml", "secrets:\n  - ''\n  - \n  - 'ok'\nclipboard: ''\n")
+      c = Oops::Config.load("#{d}/c.yml")
+      assert_equal [/ok/], c.secrets
+      assert_equal 2, c.warnings.size
+      assert_equal "auto", c.clipboard
+    end
+  end
+
   def test_wrong_types_warn_and_are_ignored
     Dir.mktmpdir do |d|
       File.write("#{d}/c.yml", "replace: [a, b]\nsecrets: nope\n")

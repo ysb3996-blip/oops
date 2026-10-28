@@ -38,7 +38,7 @@ module Oops
       (data.keys.map(&:to_s) - KNOWN_KEYS).each { |k| @warnings << "unknown key: #{k}" }
       apply_replace(data["replace"]) if data.key?("replace")
       apply_secrets(data["secrets"]) if data.key?("secrets")
-      @clipboard = data["clipboard"].to_s if data["clipboard"]
+      @clipboard = data["clipboard"].to_s unless data["clipboard"].to_s.empty?
     end
 
     def apply_replace(value)
@@ -52,6 +52,8 @@ module Oops
       return @warnings << "secrets must be a list; ignored" unless value.is_a?(Array)
 
       value.each do |src|
+        next @warnings << "blank secret pattern ignored" if src.to_s.strip.empty?
+
         @secrets << Regexp.new(src.to_s)
       rescue RegexpError => e
         @warnings << "invalid secret pattern #{src.inspect}: #{e.message}"
