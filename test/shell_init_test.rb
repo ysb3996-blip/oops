@@ -24,6 +24,14 @@ class ShellInitTest < Minitest::Test
     end
   end
 
+  def test_zsh_snippet_parses_with_ignore_close_braces
+    skip "zsh not installed" unless system("which zsh >/dev/null")
+    Dir.mktmpdir do |d|
+      File.write("#{d}/z", Oops::ShellInit.snippet("zsh"))
+      assert system("zsh", "-n", "-o", "IGNORE_CLOSE_BRACES", "#{d}/z")
+    end
+  end
+
   def test_bin_is_embedded_as_one_quoted_word
     bin = "/opt/it's a dir/oops"
     %w[zsh bash].each do |shell|

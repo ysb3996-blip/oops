@@ -204,6 +204,7 @@ class RecordIntegrationTest < Minitest::Test
   end
 
   def test_log_write_failure_keeps_relaying
+    skip "chmod 000 does not stop root" if Process.uid.zero?
     spawn_recorded(BASH)
     type(%(chmod 000 "$OOPS_SESSION"\n))
     type("#{printf_marker("start;1;1;#{b64('/')};#{b64('x')}")}; #{printf_marker('end;1;0')}\n")

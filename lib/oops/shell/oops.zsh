@@ -14,7 +14,9 @@
 # get recorded on their own, and `exec zsh` on the same tty is not recorded
 # twice. Markers go straight to the terminal device, so a redirected stdout
 # never receives them.
-if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" ]]; then
+# `zsh -ic 'cmd'` and `zsh -i script` are left alone so the command runs.
+if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" &&
+      -z "${ZSH_EXECUTION_STRING:-}" && -z "${ZSH_SCRIPT:-}" ]]; then
   __oops_bin=__OOPS_BIN__
   if [[ "${OOPS_TTY:-}" != "$TTY" ]]; then
     # A failed exec ends zsh, so check first; without the binary the shell
@@ -28,7 +30,8 @@ if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" 
     zmodload zsh/datetime 2>/dev/null
     autoload -Uz add-zsh-hook
 
-    __oops_b64() { printf '%s' "$1" | base64 | tr -d '\n' }
+    # The ";" before "}" keeps this valid with IGNORE_CLOSE_BRACES.
+    __oops_b64() { printf '%s' "$1" | base64 | tr -d '\n'; }
 
     # $1 is the line as typed (empty if history is off; $3 is the full text
     # that runs). Very long lines are cut so the marker stays small.
