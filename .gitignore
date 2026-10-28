@@ -1,0 +1,7 @@
+.superpowers/
+*.gem
+/coverage/
+/tmp/
+typescript
+.bundle/
+vendor/bundle/
