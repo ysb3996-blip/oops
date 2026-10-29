@@ -86,6 +86,18 @@ class RecordIntegrationTest < Minitest::Test
     assert_equal "```\n$ echo hi\nhi\n```\n", File.read("#{@home}/clip")
   end
 
+  # zsh prints its PROMPT_SP filler (mark, spaces, CR) before precmd, so it
+  # lands in the record; output without a trailing newline must survive it.
+  def test_zsh_output_without_trailing_newline_is_kept
+    skip "zsh not installed" unless system("which zsh > /dev/null")
+    spawn_recorded(%w[zsh -f -i])
+    type(%(eval "$(#{EXE} init zsh)"\n))
+    type("printf foo\n")
+    type("#{EXE}\n")
+    wait_for(/copied: \$ printf foo \(1 lines\)/)
+    assert_equal "```\n$ printf foo\nfoo\n```\n", File.read("#{@home}/clip")
+  end
+
   def test_resize_is_forwarded_to_inner_shell
     spawn_recorded(BASH)
     type("stty size\n")

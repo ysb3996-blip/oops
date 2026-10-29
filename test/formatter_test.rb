@@ -132,4 +132,12 @@ class FormatterTest < Minitest::Test
     fmt.format([rec(cmd: "x", out: "#{'a' * 1_000_000}\n")])
     assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 2.0
   end
+
+  def test_zsh_prompt_sp_filler_is_removed
+    filler = "\e[1m\e[7m%\e[27m\e[1m\e[0m#{' ' * 79}\r \r"
+    r = fmt.format([rec(cmd: "printf foo", out: "foo#{filler}")])
+    assert_equal ["```\n$ printf foo\nfoo\n```\n", 1], [r.text, r.lines]
+    r = fmt.format([rec(cmd: "echo bar", out: "bar\r\n#{filler}")])
+    assert_equal ["```\n$ echo bar\nbar\n```\n", 1], [r.text, r.lines]
+  end
 end

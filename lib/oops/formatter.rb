@@ -34,7 +34,7 @@ module Oops
 
     def build_block(record)
       command = clean(record.cmd.to_s).sub(/\s+\z/, "")
-      shown, count = shown_lines(clean(record.output.to_s))
+      shown, count = shown_lines(clean(PromptSp.strip(record.output.to_s)))
       exit_code = record.exit
       exit_code = nil if exit_code.to_i.zero?
       body = ["$ #{command.gsub("\n", "\n  ").gsub(/^ +$/, '')}", *shown]
