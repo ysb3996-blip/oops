@@ -5,3 +5,4 @@
 typescript
 .bundle/
 vendor/bundle/
+Gemfile.lock
