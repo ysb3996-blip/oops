@@ -16,12 +16,13 @@ module Oops
       case argv.first
       when "record" then return record(argv.drop(1), env: env, stdin: stdin, stdout: stdout, stderr: stderr)
       when "init" then return init(argv.drop(1), stdout: stdout, stderr: stderr)
+      when "doctor" then return doctor(argv.drop(1), env: env, stdout: stdout)
       when "pause", "resume" then return toggle(argv.first, argv.drop(1), env: env, stdout: stdout)
       end
 
       options = { head: nil, tail: nil, github: false, show_secrets: false }
       parser = OptionParser.new do |o|
-        o.banner = "Usage: oops [N | err] [options]\n       oops init <shell> | pause | resume"
+        o.banner = "Usage: oops [N | err] [options]\n       oops init <shell> | pause | resume | doctor"
         o.on("--github", "Format for a GitHub issue or PR comment") { options[:github] = true }
         o.on("--tail N", "Keep only the last N output lines") { |v| options[:tail] = positive(v, "--tail") }
         o.on("--head N", "Keep only the first N output lines") { |v| options[:head] = positive(v, "--head") }
@@ -124,6 +125,25 @@ module Oops
       0
     end
 
+    # `oops doctor`: diagnostics on stdout; always exits 0.
+    def self.doctor(args, env:, stdout:)
+      raise UsageError, "usage: oops doctor" unless args.empty?
+
+      config = Config.load(env: env)
+      tty = begin
+        $stdin.tty? ? $stdin.path : nil
+      rescue StandardError
+        nil
+      end
+      stdout.write Doctor.report(env: env, config: config, sessions_dir: Paths.sessions_dir(env: env), tty: tty)
+      0
+    rescue StandardError => e
+      raise if e.is_a?(UsageError)
+
+      stdout.puts "doctor: #{e.message}"
+      0
+    end
+
     # `oops record [--] <shell> [args...]`
     def self.record(args, env:, stdin:, stdout:, stderr:)
       args = args.drop(1) if args.first == "--"
@@ -145,6 +165,6 @@ module Oops
       0
     end
 
-    private_class_method :positive, :target, :copy, :report_command, :report_counts, :recording_log, :toggle
+    private_class_method :positive, :target, :copy, :report_command, :report_counts, :recording_log, :toggle, :doctor
   end
 end
