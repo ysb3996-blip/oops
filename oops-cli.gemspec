@@ -4,11 +4,20 @@ Gem::Specification.new do |spec|
   spec.name = "oops-cli"
   spec.version = Oops::VERSION
   spec.summary = "Copy the last shell command and its output to the clipboard"
-  spec.authors = ["oops authors"]
+  spec.description = "oops records what your zsh or bash prints and copies the last command (or the last " \
+                     "failed one) with its output to the clipboard as a code block, with secrets masked, " \
+                     "ready to paste into chat, Slack or GitHub."
+  spec.authors = ["ysb3996-blip"]
+  spec.email = ["ysb3996@gmail.com"]
+  spec.homepage = "https://github.com/ysb3996-blip/oops"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
-  spec.files = Dir["lib/**/*"] + Dir["exe/*"]
+  spec.files = Dir["lib/**/*"] + Dir["exe/*"] + %w[README.md LICENSE CHANGELOG.md]
   spec.bindir = "exe"
   spec.executables = ["oops"]
+  spec.metadata["homepage_uri"] = spec.homepage
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
+  spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["rubygems_mfa_required"] = "true"
 end
