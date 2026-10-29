@@ -62,7 +62,6 @@ class RecordIntegrationTest < Minitest::Test
   def b64(text) = [text].pack("m0")
 
   def test_bash_records_commands_and_oops_copies_last
-    skip "needs Task 10 (oops init) and Task 12 (oops copy)"
     spawn_recorded(BASH)
     type(%(eval "$(#{EXE} init bash)"\n))
     type("echo hello; false\n")
@@ -78,7 +77,6 @@ class RecordIntegrationTest < Minitest::Test
   end
 
   def test_zsh_records_commands
-    skip "needs Task 10 (oops init) and Task 12 (oops copy)"
     skip "zsh not installed" unless system("which zsh > /dev/null")
     spawn_recorded(%w[zsh -f -i])
     type(%(eval "$(#{EXE} init zsh)"\n))
