@@ -13,7 +13,8 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
   spec.files = Dir.chdir(__dir__) do
-    (Dir["lib/**/*"] + Dir["exe/*"]).select { |f| File.file?(f) } + %w[README.md LICENSE CHANGELOG.md]
+    docs = %w[README.md README.ja.md LICENSE CHANGELOG.md CHANGELOG.ja.md]
+    (Dir["lib/**/*"] + Dir["exe/*"]).select { |f| File.file?(f) } + docs
   end
   spec.bindir = "exe"
   spec.executables = ["oops"]
