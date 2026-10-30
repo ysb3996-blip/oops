@@ -7,7 +7,7 @@ module Oops
       [
         "\\e\\[[0-?]*[ -/]*[@-~]",              # CSI
         "\\e\\][^\\a\\e]*(?:\\a|\\e\\\\|\\z)",  # OSC
-        "\\e[P_^X].*?(?:\\e\\\\|\\z)",          # DCS, APC, PM, SOS
+        "\\e[P_^X][^\\e]*(?:\\e\\\\)?",         # DCS, APC, PM, SOS (unterminated: up to the next ESC)
         "\\e[ -/]+[0-~]",                       # nF sequences
         "\\e[@-~]?",                            # 2-char ESC sequences
         "\\a"                                   # BEL
