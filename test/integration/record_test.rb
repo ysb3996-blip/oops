@@ -56,6 +56,11 @@ class RecordIntegrationTest < Minitest::Test
 
   def session_logs = Dir.glob("#{@home}/state/oops/sessions/*.jsonl")
 
+  def logged_commands
+    path = session_logs.first
+    path ? Oops::SessionLog.new(path).each_backward.map(&:cmd) : []
+  end
+
   # Shell text that prints a marker; printf turns \033 and \\ into ESC and "\".
   def printf_marker(body) = "printf '\\033_oops;#{body}\\033\\\\'"
 
@@ -74,6 +79,19 @@ class RecordIntegrationTest < Minitest::Test
     assert_equal "```\n$ echo hello; false\nhello\n(exit 1)\n```\n", File.read("#{@home}/clip")
     type("exit 7\n")
     assert_equal 7, Process.wait2(@pid)[1].exitstatus
+  end
+
+  # The marker has to reach the recorder even when the user redirects stdout.
+  def test_pause_with_redirected_stdout_still_stops_recording
+    spawn_recorded(BASH)
+    type(%(eval "$(#{EXE} init bash)"\n))
+    type("#{EXE} pause >/dev/null\n")
+    type("echo while-paused\n")
+    type("#{EXE} resume >/dev/null\n")
+    type("echo after-resume\n")
+    commands = wait_until { logged_commands.then { |c| c if c.include?("echo after-resume") } }
+    refute_nil commands, "the command after resume was not recorded"
+    refute_includes commands, "echo while-paused"
   end
 
   def test_zsh_records_commands

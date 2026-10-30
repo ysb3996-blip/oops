@@ -119,13 +119,29 @@ module Oops
       log = recording_log(env)
       if name == "pause"
         log.pause!
-        stdout.write Marker.pause
+        write_marker(Marker.pause, env: env, stdout: stdout)
       else
         log.resume!
-        stdout.write Marker.resume
+        write_marker(Marker.resume, env: env, stdout: stdout)
       end
-      stdout.flush
       0
+    end
+
+    # Like the shell hooks, write straight to the recorded terminal: with
+    # stdout redirected (`oops pause >/dev/null`) the recorder would never see
+    # the marker although the flag file already says "paused". Without a
+    # terminal that can be opened, stdout is used.
+    def self.write_marker(marker, env:, stdout:)
+      tty = env["OOPS_TTY"].to_s
+      unless tty.empty?
+        begin
+          return File.open(tty, File::WRONLY | File::NOCTTY) { |io| io.write(marker) }
+        rescue SystemCallError, IOError
+          nil
+        end
+      end
+      stdout.write marker
+      stdout.flush
     end
 
     # `oops doctor`: diagnostics on stdout; always exits 0.
@@ -164,6 +180,7 @@ module Oops
       0
     end
 
-    private_class_method :positive, :target, :copy, :report_command, :report_counts, :recording_log, :toggle, :doctor
+    private_class_method :positive, :target, :copy, :report_command, :report_counts, :recording_log, :toggle,
+                         :write_marker, :doctor
   end
 end
