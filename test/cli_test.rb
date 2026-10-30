@@ -46,9 +46,11 @@ end
 
 class CLICopyTest < Minitest::Test
   NOT_RECORDING_ZSH = "oops: not recording in this shell. Add  eval \"$(oops init zsh)\"  " \
-                      "to the top of ~/.zshrc and open a new tab.\n".freeze
+                      "to ~/.zshrc (after whatever puts oops's Ruby on PATH, as early as possible) " \
+                      "and open a new tab.\n".freeze
   NOT_RECORDING_BASH = "oops: not recording in this shell. Add  eval \"$(oops init bash)\"  " \
-                       "to the top of ~/.bashrc and open a new tab.\n".freeze
+                       "to ~/.bashrc (after whatever puts oops's Ruby on PATH, as early as possible) " \
+                       "and open a new tab.\n".freeze
 
   def setup
     @dir = Dir.mktmpdir

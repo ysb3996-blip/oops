@@ -1,5 +1,6 @@
-# oops: bash hooks (bash 3.2 or later). Put this line at the top of ~/.bashrc
-# (or ~/.bash_profile, if that is where your settings live):
+# oops: bash hooks (bash 3.2 or later). Put this line in ~/.bashrc (or
+# ~/.bash_profile, if that is where your settings live), after whatever puts
+# oops's Ruby on PATH and as early as possible after that:
 #
 #   eval "$(oops init bash)"
 #
@@ -61,7 +62,9 @@ if [[ $- == *i* ]] && [ -t 0 ] && [ -t 1 ] && [ -z "${OOPS_DISABLE:-}" ] &&
     [ -n "$found" ]
   }
 
-  if [ "${OOPS_TTY:-}" != "$__oops_tty" ]; then
+  # Without a tty name (tty(1) failed) this terminal cannot be told apart
+  # from a recorded one, so the shell is left alone: no restart, no hooks.
+  if [ -n "$__oops_tty" ] && [ "${OOPS_TTY:-}" != "$__oops_tty" ]; then
     if __oops_runs_script; then
       : # not a prompt to record; run the script as asked
     elif command -v "$__oops_bin" >/dev/null 2>&1; then

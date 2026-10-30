@@ -1,4 +1,5 @@
-# oops: zsh hooks. Put this line at the top of ~/.zshrc:
+# oops: zsh hooks. Put this line in ~/.zshrc, after whatever puts oops's Ruby
+# on PATH and as early as possible after that:
 #
 #   eval "$(oops init zsh)"
 #
@@ -22,7 +23,19 @@ if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" 
     # A failed exec ends zsh, so check first; without the binary the shell
     # simply runs unrecorded.
     if command -v "$__oops_bin" >/dev/null 2>&1; then
-      exec "$__oops_bin" record -- "${${ZSH_ARGZERO#-}:-zsh}"
+      # Restart this same zsh. A bare name (a login shell's "-zsh") could
+      # find a different zsh on PATH, so a login shell uses $SHELL, the
+      # login shell it was started as, and other bare names go through
+      # `command -v`.
+      __oops_zsh=${${ZSH_ARGZERO#-}:-zsh}
+      if [[ "$__oops_zsh" != */* ]]; then
+        if [[ "$ZSH_ARGZERO" == -* && "${SHELL:-}" == */"$__oops_zsh" && -x "$SHELL" ]]; then
+          __oops_zsh=$SHELL
+        else
+          __oops_zsh=${$(command -v -- "$__oops_zsh" 2>/dev/null):-$__oops_zsh}
+        fi
+      fi
+      exec "$__oops_bin" record -- "$__oops_zsh"
     else
       print -ru2 -- "oops: cannot run $__oops_bin; recording disabled"
     fi

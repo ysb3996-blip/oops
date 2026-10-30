@@ -105,7 +105,8 @@ module Oops
 
       shell, rc = env["SHELL"].to_s.end_with?("bash") ? %w[bash ~/.bashrc] : %w[zsh ~/.zshrc]
       raise Failure, "not recording in this shell. Add  eval \"$(oops init #{shell})\"  " \
-                     "to the top of #{rc} and open a new tab."
+                     "to #{rc} (after whatever puts oops's Ruby on PATH, as early as possible) " \
+                     "and open a new tab."
     end
 
     # `oops pause` / `oops resume`: the marker goes through the pty to the

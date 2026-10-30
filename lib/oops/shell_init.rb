@@ -1,6 +1,7 @@
 module Oops
   # The snippets printed by `oops init zsh|bash`, meant for
-  # `eval "$(oops init zsh)"` at the top of the rc file. The templates live in
+  # `eval "$(oops init zsh)"` in the rc file, after whatever puts oops's Ruby
+  # on PATH and as early as possible after that. The templates live in
   # lib/oops/shell/; the absolute path of the oops executable is written into
   # them, so a later change to PATH cannot break the hooks.
   module ShellInit

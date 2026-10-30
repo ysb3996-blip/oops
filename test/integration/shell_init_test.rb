@@ -290,6 +290,17 @@ class ShellInitIntegrationTest < Minitest::Test
     assert_equal "login-yes\r\n", records.first.output
   end
 
+  def test_bash_without_a_tty_name_is_left_alone
+    # tty(1) failing (here a function shadows it) must not re-exec the shell,
+    # even with an OOPS_TTY inherited from elsewhere.
+    @env["OOPS_TTY"] = "/dev/oops-elsewhere"
+    write_bashrc(before: "tty() { return 1; }\n")
+    spawn_shell("bash", "-i")
+    run_line("echo alive-$((1+1))")
+    assert_match(/alive-2/, @out)
+    assert_empty session_logs
+  end
+
   def test_bash_keeps_working_when_oops_is_missing
     File.write("#{@home}/.bashrc", "#{Oops::ShellInit.snippet('bash', bin: "#{@home}/gone/oops")}PS1='[st=$?]$ '\n")
     spawn_shell("bash", "-i")
@@ -358,6 +369,21 @@ class ShellInitIntegrationTest < Minitest::Test
     assert_equal 8, shell_exit_status
     assert_includes @out, "RAN-SCRIPT"
     assert_empty session_logs
+  end
+
+  def test_zsh_login_shell_restarts_the_same_zsh_binary
+    skip_without_zsh
+    real = `command -v zsh`.strip
+    FileUtils.mkdir_p("#{@home}/zbin")
+    File.symlink(real, "#{@home}/zbin/zsh")
+    @env["SHELL"] = "#{@home}/zbin/zsh"
+    # /etc/zprofile may reset PATH (macOS path_helper); oops needs its Ruby.
+    File.write("#{@home}/.zshrc", "export PATH='#{ENV.fetch('PATH')}'\n#{snippet_line('zsh')}PS1='[st=%?]%% '\n")
+    spawn_shell([real, "-zsh"])
+    run_line('print -r -- "argzero=$ZSH_ARGZERO"')
+    assert_equal 1, session_logs.size
+    out = records.first.output
+    assert out.start_with?("argzero=#{@home}/zbin/zsh\r\n".b), out.inspect
   end
 
   def test_zsh_ignore_close_braces_in_rc
