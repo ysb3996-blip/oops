@@ -1,6 +1,16 @@
 require "test_helper"
 require "pty"
 
+# Lets a test make PTY.open fail without redefining it (which warns).
+module FailingPtyOpen
+  def open(*, &)
+    raise Errno::ENXIO, "no pty" if Thread.current[:oops_fail_pty_open]
+
+    super
+  end
+end
+PTY.singleton_class.prepend(FailingPtyOpen)
+
 class RecorderTest < Minitest::Test
   FailingLog = Struct.new(:calls) do
     def append(_record)
@@ -74,12 +84,11 @@ class RecorderTest < Minitest::Test
 
   def test_pty_failure_execs_the_shell_with_recording_disabled
     with_recorder do |rec, execs, err, dir|
-      original = PTY.method(:open)
       begin
-        PTY.define_singleton_method(:open) { |*| raise Errno::ENXIO, "no pty" }
+        Thread.current[:oops_fail_pty_open] = true
         assert_equal 0, rec.run
       ensure
-        PTY.define_singleton_method(:open, original)
+        Thread.current[:oops_fail_pty_open] = nil
       end
       assert_equal [{ "OOPS_DISABLE" => "1" }], execs
       assert_match(/\Aoops: recording disabled: .*no pty/, err.string)
