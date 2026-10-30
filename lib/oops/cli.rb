@@ -16,7 +16,7 @@ module Oops
       case argv.first
       when "record" then return record(argv.drop(1), env: env, stdin: stdin, stdout: stdout, stderr: stderr)
       when "init" then return init(argv.drop(1), stdout: stdout, stderr: stderr)
-      when "doctor" then return doctor(argv.drop(1), env: env, stdout: stdout)
+      when "doctor" then return doctor(argv.drop(1), env: env, stdin: stdin, stdout: stdout)
       when "pause", "resume" then return toggle(argv.first, argv.drop(1), env: env, stdout: stdout)
       end
 
@@ -126,15 +126,11 @@ module Oops
     end
 
     # `oops doctor`: diagnostics on stdout; always exits 0.
-    def self.doctor(args, env:, stdout:)
+    def self.doctor(args, env:, stdin:, stdout:)
       raise UsageError, "usage: oops doctor" unless args.empty?
 
       config = Config.load(env: env)
-      tty = begin
-        $stdin.tty? ? $stdin.path : nil
-      rescue StandardError
-        nil
-      end
+      tty = Tty.name(stdin)
       stdout.write Doctor.report(env: env, config: config, sessions_dir: Paths.sessions_dir(env: env), tty: tty)
       0
     rescue StandardError => e

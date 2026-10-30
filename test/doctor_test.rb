@@ -1,4 +1,5 @@
 require "test_helper"
+require "pty"
 
 class DoctorTest < Minitest::Test
   def setup
@@ -72,6 +73,28 @@ class DoctorTest < Minitest::Test
   def test_appending_prompt_command_is_fine
     File.write(File.join(@dir, ".bashrc"), "PROMPT_COMMAND=\"$PROMPT_COMMAND; y\"\n")
     refute_includes report(@env.merge("SHELL" => "/bin/bash")), "warning"
+  end
+
+  def test_not_the_recorded_tty_names_both_ttys
+    log = File.join(@dir, "b.jsonl")
+    File.write(log, "")
+    out = report(@env.merge("OOPS_SESSION" => log, "OOPS_TTY" => "/dev/ttys001"), tty: "/dev/ttys009")
+    assert_includes out, "this terminal: not the recorded tty (this: /dev/ttys009, recorded: /dev/ttys001)\n"
+    out = report(@env.merge("OOPS_SESSION" => log, "OOPS_TTY" => "/dev/ttys001"), tty: nil)
+    assert_includes out, "this terminal: not the recorded tty (this: unknown, recorded: /dev/ttys001)\n"
+  end
+
+  def test_cli_doctor_on_the_recorded_pty_reports_recorded
+    master, slave = PTY.open
+    log = File.join(@dir, "b.jsonl")
+    File.write(log, "")
+    out = StringIO.new
+    env = @env.merge("OOPS_SESSION" => log, "OOPS_TTY" => slave.path, "XDG_STATE_HOME" => File.join(@dir, "st"))
+    assert_equal 0, Oops::CLI.run(["doctor"], env: env, stdin: slave, stdout: out, stderr: StringIO.new)
+    assert_includes out.string, "this terminal: recorded\n"
+  ensure
+    slave&.close
+    master&.close
   end
 
   def test_cli_doctor_exits_zero_and_prints

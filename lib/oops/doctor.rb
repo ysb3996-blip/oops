@@ -25,12 +25,18 @@ module Oops
       lines = []
       state = File.file?(session) ? session : "#{session} - log file missing"
       lines << "recording: yes (#{state})"
-      here = !tty.to_s.empty? && env["OOPS_TTY"].to_s == tty.to_s
-      lines << "this terminal: #{here ? 'recorded' : 'not the recorded tty'}"
+      lines << terminal_line(env["OOPS_TTY"].to_s, tty.to_s)
       status = read_status(session)
       lines << "log writable: #{status == 'ok' ? 'yes' : 'no'} (#{status.empty? ? 'no status file' : status})"
       lines << "paused: #{File.exist?("#{session}.paused") ? 'yes' : 'no'}"
       lines
+    end
+
+    def terminal_line(recorded, here)
+      return "this terminal: recorded" if !here.empty? && recorded == here
+
+      "this terminal: not the recorded tty (this: #{here.empty? ? 'unknown' : here}, " \
+        "recorded: #{recorded.empty? ? 'unknown' : recorded})"
     end
 
     def read_status(session)

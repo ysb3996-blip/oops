@@ -80,7 +80,7 @@ module Oops
     end
 
     def run
-      tty = tty_name(@stdin)
+      tty = Tty.name(@stdin)
       return exec_shell({}) if tty && @env["OOPS_TTY"] == tty
 
       install_traps
@@ -107,18 +107,6 @@ module Oops
     def default_shell(env)
       shell = env["SHELL"].to_s
       shell.empty? ? "/bin/sh" : shell
-    end
-
-    # IO#ttyname needs io-console 0.7.2 or later (Ruby 3.3 ships 0.7.1), so
-    # fall back to tty(1) on older versions.
-    def tty_name(io)
-      return nil unless io.respond_to?(:tty?) && io.tty?
-      return io.ttyname if io.respond_to?(:ttyname)
-
-      name = IO.popen(["tty"], in: io, err: File::NULL, &:read).strip
-      name.start_with?("/") ? name : nil
-    rescue SystemCallError, IOError
-      nil
     end
 
     # Replaces this process with the shell. Returns only when exec fails.
