@@ -16,7 +16,7 @@ jobs:
         # Ruby 3.5 was released as 4.0 ("3.5" only matches 3.5.0-preview1).
         ruby: ["3.3", "3.4", "4.0"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install zsh
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y zsh
@@ -32,6 +32,6 @@ jobs:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # zsh is not supported by shellcheck; only the bash snippet is checked.
       - run: shellcheck -S warning lib/oops/shell/oops.bash bin/setup
