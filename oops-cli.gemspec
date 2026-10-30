@@ -8,7 +8,6 @@ Gem::Specification.new do |spec|
                      "failed one) with its output to the clipboard as a code block, with secrets masked, " \
                      "ready to paste into chat, Slack or GitHub."
   spec.authors = ["ysb3996-blip"]
-  spec.email = ["ysb3996@gmail.com"]
   spec.homepage = "https://github.com/ysb3996-blip/oops"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3"
