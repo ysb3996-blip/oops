@@ -227,6 +227,10 @@ Manual checklist before a release:
 - `exec zsh` in a recorded tab does not start a second recording.
 - A VS Code terminal opened with `code .` from a recorded tab is recorded on its own.
 
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md); issues labeled `good first issue` are a good place to start.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

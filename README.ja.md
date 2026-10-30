@@ -227,6 +227,10 @@ rbenv rehash                         # rbenv を使う場合のみ
 - 記録中のタブで `exec zsh` しても、2 つ目の記録が始まらない。
 - 記録中のタブから `code .` で開いた VS Code のターミナルが、独立して記録される。
 
+## コントリビュート
+
+バグ報告、アイデア、プルリクエストを歓迎します。[CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を読んでください。`good first issue` のラベルが付いた issue が、始めやすい入口です。
+
 ## ライセンス
 
 MIT。[LICENSE](LICENSE) を参照してください。
