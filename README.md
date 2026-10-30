@@ -161,6 +161,7 @@ Masking is pattern based, so it is a safety net, not a guarantee: a secret in a 
 - Commands longer than 8192 characters are truncated in the recorded command line.
 - Output of full-screen apps (vim, less, tmux and so on) is not kept; it is replaced by `[full-screen app output omitted]`.
 - A command line that starts with a space is recorded in zsh but dropped in bash (bash does not save it to history, which is where oops reads the command).
+- bash: if `bash-preexec` is loaded **after** the oops line, recording stops after the first few commands (checked with the copy that ships with Ghostty's bash integration). Load it above the oops line. Ghostty's own bash integration includes it, so in Ghostty with bash the integration is not added back to the recorded shell; zsh is handled by the snippet.
 - bash: the line after a pipeline sees `PIPESTATUS` with only the last status (`false | true`, then `echo ${PIPESTATUS[*]}` prints `0`, not `1 0`), because oops's `PROMPT_COMMAND` entry runs first. `$?` and `$_` are kept. A prompt that shows pipeline statuses (starship's `pipestatus`) shows less in bash. zsh keeps `pipestatus`.
 - macOS: `pbcopy` chooses its text encoding from `LANG` / `LC_*`. If Japanese or other non-ASCII text arrives garbled, check that a UTF-8 locale is set (for example `LANG=en_US.UTF-8`), which can be missing in shells started over SSH.
 - fish and native Windows are not supported yet.
