@@ -20,12 +20,20 @@ module Oops
     CURSOR_FORWARD = /\e\[(\d*)C/n
     MAX_FORWARD = 200
 
+    # "Move to column N": the same UIs place each word this way. Columns are
+    # not replayed; a jump that follows text becomes one space, so words stay
+    # apart. A NUL marks the jump while the other sequences are removed.
+    COLUMN_JUMP = /\e\[\d*G/n
+    JUMP_MARK = "\0".b
+    AFTER_TEXT_JUMP = /(?<=[^\s\0])\0+/n
+
     module_function
 
     def strip(bytes)
       encoding = bytes.encoding
       text = bytes.b.gsub(CURSOR_FORWARD) { " ".b * Regexp.last_match(1).to_i.clamp(1, MAX_FORWARD) }
-      text = text.gsub(ESCAPES, "".b).gsub("\r\n".b, "\n".b)
+      text = text.gsub(COLUMN_JUMP, JUMP_MARK).gsub(ESCAPES, "".b)
+      text = text.gsub(AFTER_TEXT_JUMP, " ".b).delete(JUMP_MARK).gsub("\r\n".b, "\n".b)
       lines = text.split("\n".b, -1).map { |line| apply_line_controls(line, encoding) }
       lines.join("\n".b).force_encoding(encoding)
     end
