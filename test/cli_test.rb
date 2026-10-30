@@ -212,14 +212,16 @@ class CLICopyTest < Minitest::Test
     end
   end
 
-  def test_clipboard_false_in_config_means_auto_detect
-    write_config("clipboard: false\n")
+  def test_clipboard_true_or_false_in_config_means_auto_detect
     add("c1", "one\r\n")
     seen = []
     fake = Object.new
     def fake.copy(_text) = nil
-    with_detect(->(setting, **) { (seen << setting) && fake }) { assert_equal 0, run_cli.first }
-    assert_equal ["false"], seen
+    %w[false true].each do |value|
+      write_config("clipboard: #{value}\n")
+      with_detect(->(setting, **) { (seen << setting) && fake }) { assert_equal 0, run_cli.first }
+    end
+    assert_equal %w[auto auto], seen
     assert_equal "osc52", Oops::Clipboard.detect("false", env: {}, which: ->(_) { false }).name
   end
 

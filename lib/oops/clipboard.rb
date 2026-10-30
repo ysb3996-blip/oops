@@ -149,7 +149,7 @@ module Oops
 
     def detect(setting, env: ENV, which: DEFAULT_WHICH, platform: RUBY_PLATFORM, proc_version: nil)
       setting = setting.to_s.strip
-      setting = "auto" if setting.empty? || setting == "false"
+      setting = "auto" if setting.empty? || %w[true false].include?(setting)
       return explicit(setting) unless setting == "auto"
 
       auto(env, which, platform, proc_version)

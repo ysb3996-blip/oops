@@ -57,10 +57,12 @@ class DoctorTest < Minitest::Test
     assert_includes out, "log writable: no"
   end
 
-  def test_warns_when_clipboard_is_true
+  def test_clipboard_true_is_auto_without_a_warning
     path = File.join(@dir, "c.yml")
     File.write(path, "clipboard: true\n")
-    assert_includes report(config: Oops::Config.new(path)), "warning: config clipboard is \"true\""
+    out = report(config: Oops::Config.new(path))
+    refute_includes out, "clipboard: true"
+    refute_includes out, "warning"
   end
 
   def test_warns_about_bashrc_debug_trap_and_prompt_command

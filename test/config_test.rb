@@ -65,6 +65,16 @@ class ConfigTest < Minitest::Test
     assert_equal({ "a" => "b" }, c.replace)
   end
 
+  def test_boolean_clipboard_means_auto
+    Dir.mktmpdir do |d|
+      path = File.join(d, "c.yml")
+      { "true" => "auto", "false" => "auto", "\"true\"" => "auto", "xsel" => "xsel" }.each do |yaml, want|
+        File.write(path, "clipboard: #{yaml}\n")
+        assert_equal want, Oops::Config.new(path).clipboard, yaml
+      end
+    end
+  end
+
   def test_nil_path_uses_xdg_config_home
     Dir.mktmpdir do |d|
       FileUtils.mkdir_p("#{d}/oops")

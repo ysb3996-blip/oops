@@ -19,8 +19,8 @@ class ClipboardTest < Minitest::Test
     assert_equal "osc52", detect(which: ->(_) { false }).name
   end
 
-  def test_setting_false_empty_nil_mean_auto
-    ["false", "", nil].each do |s|
+  def test_setting_true_false_empty_nil_mean_auto
+    ["true", "false", "", nil].each do |s|
       assert_equal "pbcopy", detect(s, platform: "arm64-darwin25").name
     end
   end

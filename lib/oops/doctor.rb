@@ -14,7 +14,7 @@ module Oops
       lines << "config: #{config_line(env, config)}"
       lines << sessions_line(sessions_dir)
       lines << "ruby: #{RUBY_VERSION} (#{RUBY_PLATFORM})"
-      lines.concat(warnings(env, config))
+      lines.concat(warnings(env))
       "#{lines.join("\n")}\n"
     end
 
@@ -83,16 +83,10 @@ module Oops
       "sessions: unreadable"
     end
 
-    def warnings(env, config)
-      out = []
-      if config.clipboard == "true"
-        out << "warning: config clipboard is \"true\", which runs `sh -c true` and copies nothing; " \
-               "use \"auto\" or a clipboard command"
-      end
-      out.concat(bash_warnings(env)) if env["SHELL"].to_s.end_with?("bash")
-      out
+    def warnings(env)
+      env["SHELL"].to_s.end_with?("bash") ? bash_warnings(env) : []
     rescue StandardError
-      out || []
+      []
     end
 
     def bash_warnings(env)

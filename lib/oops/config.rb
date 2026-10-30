@@ -38,7 +38,14 @@ module Oops
       (data.keys.map(&:to_s) - KNOWN_KEYS).each { |k| @warnings << "unknown key: #{k}" }
       apply_replace(data["replace"]) if data.key?("replace")
       apply_secrets(data["secrets"]) if data.key?("secrets")
-      @clipboard = data["clipboard"].to_s unless data["clipboard"].to_s.empty?
+      apply_clipboard(data["clipboard"]) if data.key?("clipboard")
+    end
+
+    # YAML reads `clipboard: true` (or false) as a boolean; as a command it
+    # would run `sh -c true` and copy nothing, so both mean auto.
+    def apply_clipboard(value)
+      text = value.to_s.strip
+      @clipboard = text.empty? || %w[true false].include?(text) ? "auto" : value.to_s
     end
 
     def apply_replace(value)
