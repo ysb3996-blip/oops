@@ -1,0 +1,6 @@
+shell=bash
+
+# `local x= y=` deliberately assigns empty strings, the snippet keeps to bash 3.2 syntax.
+disable=SC1007
+# PROMPT_COMMAND is an array on bash 5.1+ and a string before; the snippet checks which at run time.
+disable=SC2178

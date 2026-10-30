@@ -19,20 +19,20 @@ oops stores the raw, unmasked output of every command (see "Privacy and security
 
 ## Set up and send a pull request
 
-The README's "Development" section has the full setup: Ruby 3.3 or newer, `bundle install`, and how to try your build in a new terminal tab. In short:
+The README's "Development" section has the full setup: Ruby 3.3 or newer, `bin/setup`, and how to try your build in a new terminal tab. In short:
 
 ```sh
 git clone https://github.com/<you>/oops.git && cd oops
-bundle install
+bin/setup
 git checkout -b fix/short-description
 # ...change code...
-bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
+bundle exec rake && gem build oops-cli.gemspec
 ```
 
 Before you open the pull request:
 
 - **Write the test first** and watch it fail for the right reason. Bug fixes need a test that fails without the fix.
-- Run all three commands above. CI runs them on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0.
+- Run both commands above (`rake` runs the tests and rubocop). CI runs them on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0.
 - **Verify it yourself and paste the result into the pull request.** This is required, and the pull request template has a section for it. Paste the last lines of `bundle exec rake test` (the `N runs, ... 0 failures` line), the `bundle exec rubocop` summary, and, for any change that affects behavior, what you ran in a **new terminal tab** with your build installed and what it printed (for example `oops doctor` plus the command you tried, or the before and after of the output). Mask anything private first. A pull request without this will be sent back before review.
 - Keep each pull request to one change. Explain *why* in the description.
 - Commit messages are short and in the form `type(scope): summary`, for example `fix(ansi): keep words apart when a UI places them with cursor column jumps`. Common types: `fix`, `feat`, `docs`, `test`, `style`, `refactor`.

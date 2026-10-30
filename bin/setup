@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Sets up a development checkout: checks Ruby, installs gems, runs the checks.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if ! ruby -e 'exit(RUBY_VERSION >= "3.3" ? 0 : 1)'; then
+  echo "oops needs Ruby 3.3 or newer; found $(ruby -v)." >&2
+  echo "The repository pins a version in .ruby-version; install it with your version manager." >&2
+  exit 1
+fi
+
+for shell in zsh bash; do
+  if ! command -v "$shell" >/dev/null 2>&1; then
+    echo "$shell is missing: the end-to-end tests start real shells (on Debian/Ubuntu: sudo apt-get install zsh)." >&2
+    exit 1
+  fi
+done
+
+bundle install
+bundle exec rake
+
+echo
+echo "Ready. Try your build with: bundle exec exe/oops doctor"

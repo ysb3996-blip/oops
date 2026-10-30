@@ -183,15 +183,15 @@ cd oops
 The repository pins Ruby 4.0.9 in `.ruby-version`. With a version manager such as rbenv, asdf or mise, install that version (`rbenv install 4.0.9`, then `rbenv rehash`). Any Ruby 3.3 or newer also works if you delete or ignore the pin. Check with `ruby -v`.
 
 ```sh
-bundle install
-bundle exec rake test       # the whole test suite (takes about 30 seconds)
-bundle exec rubocop         # style check
+bin/setup                   # checks Ruby, zsh and bash, installs gems, runs the checks
 ```
 
-CI runs both commands on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0, and also builds the gem, so run all three before opening a pull request:
+`bin/setup` is the same as `bundle install` followed by `bundle exec rake`. `bundle exec rake` runs the whole test suite (about 30 seconds) and then rubocop (style check); `bundle exec rake test` and `bundle exec rubocop` run them one at a time.
+
+CI runs both on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0, builds the gem, and runs shellcheck on the bash snippet (`shellcheck -S warning lib/oops/shell/oops.bash bin/setup`, if you have it). Before opening a pull request, run:
 
 ```sh
-bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
+bundle exec rake && gem build oops-cli.gemspec
 ```
 
 ### Try your changes
