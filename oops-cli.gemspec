@@ -12,10 +12,11 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/ysb3996-blip/oops"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
-  spec.files = Dir["lib/**/*"] + Dir["exe/*"] + %w[README.md LICENSE CHANGELOG.md]
+  spec.files = Dir.chdir(__dir__) do
+    (Dir["lib/**/*"] + Dir["exe/*"]).select { |f| File.file?(f) } + %w[README.md LICENSE CHANGELOG.md]
+  end
   spec.bindir = "exe"
   spec.executables = ["oops"]
-  spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"

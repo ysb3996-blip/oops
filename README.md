@@ -64,7 +64,7 @@ Options for `oops`, `oops N` and `oops err`:
 
 `oops` never copies itself: if the previous command was `oops`, you get the command before it.
 
-Exit codes: `0` copied, `1` nothing to copy (not recording, no command yet, no failed command, paused, or no clipboard tool), `2` usage error.
+Exit codes: `0` copied, `1` nothing copied (not recording, no command yet, no failed command, paused, or the clipboard command failed), `2` usage error.
 
 ### Default output
 
@@ -145,6 +145,7 @@ Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authori
 
 ## Privacy and security
 
+- The session logs hold the raw, **unmasked** output of every recorded command. Masking and the replace table are applied only when you copy. The logs live under `${XDG_STATE_HOME:-~/.local/state}/oops/sessions/`, readable only by you (mode 0600, directory 0700). To delete all of them, run `rm -rf "${XDG_STATE_HOME:-$HOME/.local/state}/oops"` (by default `rm -rf ~/.local/state/oops`). Use `oops pause` before showing secrets you do not want on disk.
 - Recorded output is untrusted: any program you run can print text that looks like oops's markers. oops therefore obeys a pause or resume marker only when it agrees with the flag file that `oops pause` and `oops resume` set, so output cannot silently pause recording. A program can still fake where a command starts and ends in the log, so check what you paste.
 
 ## Known limitations
@@ -152,7 +153,7 @@ Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authori
 - Each recorded tab keeps one Ruby process alive (about 17 MB).
 - `sudo -s` or `su` that drops the environment starts a second, nested recording, so those commands are logged twice.
 - Only the current tab is available. A tab you closed, or an earlier tab, cannot be retrieved.
-- Via OSC 52 (SSH, or no clipboard tool), terminals limit how much can be sent at once. oops truncates to roughly 100 KB and warns.
+- Via OSC 52 (SSH, or no clipboard tool), terminals limit how much can be sent at once. oops truncates to roughly 100 KB and warns. OSC 52 is a one-way escape sequence, so oops cannot tell whether the terminal accepted the copy; some terminals ignore it or ask first, and tmux needs `set -g set-clipboard on`.
 - Commands longer than 8192 characters are truncated in the recorded command line.
 - Output of full-screen apps (vim, less, tmux and so on) is not kept; it is replaced by `[full-screen app output omitted]`.
 - A command line that starts with a space is recorded in zsh but dropped in bash (bash does not save it to history, which is where oops reads the command).
