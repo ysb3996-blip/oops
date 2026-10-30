@@ -33,6 +33,7 @@ bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
 
 - **先にテストを書き**、正しい理由で失敗することを確認してください。バグ修正には、修正なしでは失敗するテストが必要です。
 - 上の 3 つのコマンドをすべて実行してください。CI は Ubuntu と macOS で、Ruby 3.3・3.4・4.0 を使って実行します。
+- **自分で動作確認をして、その結果をプルリクエストに貼ってください。** これは必須で、プルリクエストのテンプレートにも欄があります。貼るものは次のとおりです。`bundle exec rake test` の最後の行（`N runs, ... 0 failures` の行）、`bundle exec rubocop` の要約、そして動作に影響する変更では、自分のビルドを入れた**新しい端末タブ**で実行した内容とその出力です（例: `oops doctor` と試したコマンド、または変更前後の出力）。個人的な情報は先に隠してください。この確認がないプルリクエストは、レビューの前に差し戻します。
 - 1 つのプルリクエストは、1 つの変更にしてください。説明には「なぜ」を書いてください。
 - コミットメッセージは短く、`type(scope): summary` の形にします。例: `fix(ansi): keep words apart when a UI places them with cursor column jumps`。よく使う type は `fix`、`feat`、`docs`、`test`、`style`、`refactor` です。
 - README や CHANGELOG を変えたときは、日本語版（`README.ja.md`、`CHANGELOG.ja.md`）も更新してください。日本語が書けない場合は、プルリクエストにそう書いてください。メンテナーが手伝います。
