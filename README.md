@@ -132,6 +132,7 @@ clipboard: auto     # auto | pbcopy | wl-copy | xclip | xsel | clip.exe | osc52 
 - `replace` keys are applied longest first and are case-sensitive.
 - Unknown keys produce a warning and are ignored. A broken YAML file produces a warning and oops carries on without a config.
 - With `clipboard: auto`, oops tries `pbcopy` on macOS, `clip.exe` on WSL, `wl-copy` on Wayland, `xclip` or `xsel` on X11, and falls back to the OSC 52 terminal escape sequence (also used over SSH). `oops doctor` shows which one it picked.
+- A custom `clipboard:` command runs in its own process group with a 5 second timeout, so it must not read from or configure the terminal (no password prompts, no `stty`); Ctrl-C during a copy does not reach it.
 
 Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authorization` header values, private key blocks, values assigned to names containing `key`, `token`, `secret`, `password`, `passwd` or `pwd`, email addresses, credentials inside URLs, and public IPv4 addresses (loopback and private ranges are left alone). It is applied to the command line as well as the output.
 
@@ -140,7 +141,7 @@ Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authori
 1. `oops init` prints a snippet that you `eval` from your rc file. In an interactive shell on a terminal that is not recorded yet, it restarts the shell under `oops record`.
 2. `oops record` is a small Ruby pty relay: it passes your keystrokes and the shell's output through untouched and forwards window resizes to the shell.
 3. Hooks in the shell (zsh `preexec`/`precmd`, bash `DEBUG` trap and `PROMPT_COMMAND`) emit invisible APC markers around each command. The relay strips them, so your terminal never sees them.
-4. For each finished command the relay appends one JSON line (command, directory, times, exit code, raw output) to a per-tab log under `${XDG_STATE_HOME:-~/.local/state}/oops/sessions/`. Output is capped at 1 MB per command (the tail is kept). Each tab's log is capped at 50 MB: when it passes that, it is rewritten to keep only its newest commands (up to about 37 MB). When a tab starts recording, logs of closed tabs are deleted, oldest first, until all logs together take at most 50 MB; logs of open tabs are never deleted, so several busy tabs can together use more.
+4. For each finished command the relay appends one JSON line (command, directory, times, exit code, raw output) to a per-tab log under `${XDG_STATE_HOME:-~/.local/state}/oops/sessions/`. Output is capped at 1 MB per command (the tail is kept). Each tab's log is capped at 50 MB: when it passes that, it is rewritten to keep only its newest commands (down to about 37 MiB). When a tab starts recording, logs of closed tabs are deleted, oldest first, until all logs together take at most 50 MB; logs of open tabs are never deleted, so several busy tabs can together use more.
 5. `oops` reads the end of the current tab's log, cleans and masks the text, builds the code block and hands it to the clipboard. Nothing is ever re-run.
 
 ## Privacy and security

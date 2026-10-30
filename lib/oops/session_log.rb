@@ -52,7 +52,7 @@ module Oops
     end
 
     def self.remove_log(file)
-      [file, "#{file}.paused", "#{file}.status"].each do |f|
+      [file, "#{file}.paused", "#{file}.status", "#{file}.trim"].each do |f|
         File.delete(f)
       rescue Errno::ENOENT
         nil
