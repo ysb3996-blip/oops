@@ -183,15 +183,15 @@ cd oops
 リポジトリは `.ruby-version` で Ruby 4.0.9 を指定しています。rbenv・asdf・mise などのバージョン管理ツールを使っている場合は、そのバージョンを入れてください（`rbenv install 4.0.9`、続けて `rbenv rehash`）。この指定を消すか無視すれば、3.3 以降の任意の Ruby でも動きます。`ruby -v` で確認します。
 
 ```sh
-bundle install
-bundle exec rake test       # テスト全体（約 30 秒）
-bundle exec rubocop         # スタイルのチェック
+bin/setup                   # Ruby・zsh・bash を確認し、gem を入れて、チェックを実行する
 ```
 
-CI は Ubuntu と macOS で、Ruby 3.3・3.4・4.0 を使ってこの 2 つを実行し、gem のビルドも行います。プルリクエストを出す前に、3 つとも実行してください。
+`bin/setup` は、`bundle install` のあとに `bundle exec rake` を実行するのと同じです。`bundle exec rake` はテスト全体（約 30 秒）を実行したあと rubocop（スタイルのチェック）を実行します。`bundle exec rake test` と `bundle exec rubocop` で、1 つずつ実行することもできます。
+
+CI は Ubuntu と macOS で、Ruby 3.3・3.4・4.0 を使ってこの 2 つを実行し、gem のビルドと、bash スニペットへの shellcheck（`shellcheck -S warning lib/oops/shell/oops.bash bin/setup`。手元に入れていれば実行できます）も行います。プルリクエストを出す前に、次を実行してください。
 
 ```sh
-bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
+bundle exec rake && gem build oops-cli.gemspec
 ```
 
 ### 変更を試す
