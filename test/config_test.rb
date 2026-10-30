@@ -15,7 +15,9 @@ class ConfigTest < Minitest::Test
     code = 'require "oops"; Oops::Config.load("/nonexistent/config.yml"); ' \
            "exit($LOADED_FEATURES.grep(/psych|yaml/).empty? ? 0 : 1)"
     lib = File.expand_path("../lib", __dir__)
-    assert system(RbConfig.ruby, "-I", lib, "-e", code), "yaml was loaded without a config file"
+    # Bundler (-rbundler/setup via RUBYOPT) loads yaml itself, so run without it.
+    env = { "RUBYOPT" => nil, "RUBYLIB" => nil }
+    assert system(env, RbConfig.ruby, "-I", lib, "-e", code), "yaml was loaded without a config file"
   end
 
   def test_loads_and_sorts_replace_longest_first
