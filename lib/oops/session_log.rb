@@ -1,8 +1,12 @@
 module Oops
-  # Append-only JSONL log of captured commands for one shell session.
+  # Append-only JSONL log of captured commands for one shell session. A log
+  # that grows past its cap is rewritten to keep only its newest records.
   class SessionLog
     CHUNK_SIZE = 64 * 1024
     DEFAULT_MAX_BYTES = 50 * 1024 * 1024
+    # When a log passes its cap it is cut to this share of the cap, so a busy
+    # tab is not rewritten on every command.
+    TRIM_TO = 0.75
     LOG_NAME = /\A(\d{8}-\d{6})-(\d+)\.jsonl\z/
 
     attr_reader :path
@@ -56,15 +60,20 @@ module Oops
     end
     private_class_method :remove_log
 
-    def initialize(path)
+    def initialize(path, max_bytes: DEFAULT_MAX_BYTES)
       @path = path
+      @max_bytes = max_bytes
     end
 
+    # Raises if the record cannot be written. Trimming an oversized log is
+    # best effort and never raises.
     def append(record)
       line = record.to_json_line
-      File.open(@path, File::APPEND | File::CREAT | File::WRONLY, 0o600) do |f|
+      size = File.open(@path, File::APPEND | File::CREAT | File::WRONLY, 0o600) do |f|
         f.syswrite(line)
+        f.size
       end
+      trim if size > @max_bytes
     end
 
     # Yields records newest first. Unparsable lines are skipped. The block can
@@ -121,6 +130,46 @@ module Oops
 
     def pause_path
       "#{@path}.paused"
+    end
+
+    # Rewrites the log with the newest complete records that fit in TRIM_TO
+    # of the cap (always at least the newest one). The new file is written
+    # next to the log and renamed over it, so a reader sees either the old or
+    # the new log, never a mix.
+    def trim
+      keep = newest_lines((@max_bytes * TRIM_TO).to_i)
+      tmp = "#{@path}.trim"
+      remove_file(tmp)
+      File.open(tmp, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |f|
+        keep.reverse_each { |l| f.write(l, "\n") }
+      end
+      File.rename(tmp, @path)
+    rescue StandardError
+      remove_file(tmp) if tmp
+      nil
+    end
+
+    # Newest lines first, as many as fit in limit bytes (newlines included),
+    # but at least one.
+    def newest_lines(limit)
+      lines = []
+      total = 0
+      File.open(@path, "rb") do |io|
+        each_line_backward(io) do |line|
+          next if line.empty?
+          break if !lines.empty? && total + line.bytesize + 1 > limit
+
+          lines << line
+          total += line.bytesize + 1
+        end
+      end
+      lines
+    end
+
+    def remove_file(file)
+      File.delete(file)
+    rescue SystemCallError
+      nil
     end
 
     def parse(line)

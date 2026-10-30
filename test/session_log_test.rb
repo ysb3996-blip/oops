@@ -35,6 +35,48 @@ class SessionLogTest < Minitest::Test
     assert_raises(SystemCallError) { log.append(rec(1)) }
   end
 
+  def test_append_caps_the_log_keeping_the_newest_records
+    Dir.mktmpdir do |d|
+      log = Oops::SessionLog.new("#{d}/s.jsonl", max_bytes: 2000)
+      line = rec(1, out: "x" * 100).to_json_line.bytesize
+      sizes = (1..60).map do |i|
+        log.append(rec(i, out: "x" * 100))
+        File.size(log.path)
+      end
+      assert_operator sizes.max, :<=, 2000
+      assert_operator sizes.max, :>, 2000 - line, "the cap is used, not cut far below it"
+      kept = log.last(100).map(&:seq)
+      assert_equal 60, kept.last
+      assert_equal (kept.first..60).to_a, kept, "newest records kept, in order"
+      assert_equal 0o600, File.stat(log.path).mode & 0o777
+      assert_equal ["s.jsonl"], Dir.children(d)
+    end
+  end
+
+  def test_cap_failure_does_not_raise_or_lose_the_record
+    skip "root ignores directory permissions" if Process.uid.zero?
+    Dir.mktmpdir do |d|
+      log = Oops::SessionLog.new("#{d}/s.jsonl", max_bytes: 1000)
+      log.append(rec(1, out: "x" * 200))
+      log.append(rec(2, out: "x" * 200))
+      File.chmod(0o500, d)
+      log.append(rec(3, out: "y" * 200))
+      assert_operator File.size(log.path), :>, 1000
+      assert_equal [1, 2, 3], log.last(5).map(&:seq)
+    ensure
+      File.chmod(0o700, d)
+    end
+  end
+
+  def test_cap_keeps_the_newest_record_even_when_it_alone_is_too_big
+    Dir.mktmpdir do |d|
+      log = Oops::SessionLog.new("#{d}/s.jsonl", max_bytes: 100)
+      log.append(rec(1, out: "x" * 200))
+      log.append(rec(2, out: "y" * 200))
+      assert_equal [2], log.last(5).map(&:seq)
+    end
+  end
+
   def test_last_skips_oops_and_unfinished
     with_log do |log|
       log.append(rec(1))
