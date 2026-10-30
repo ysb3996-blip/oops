@@ -15,9 +15,11 @@ class ConfigTest < Minitest::Test
     code = 'require "oops"; Oops::Config.load("/nonexistent/config.yml"); ' \
            "exit($LOADED_FEATURES.grep(/psych|yaml/).empty? ? 0 : 1)"
     lib = File.expand_path("../lib", __dir__)
-    # Bundler (-rbundler/setup via RUBYOPT) loads yaml itself, so run without it.
+    # RubyGems and Bundler can load yaml themselves (for .gemrc, for one), so
+    # run without them.
     env = { "RUBYOPT" => nil, "RUBYLIB" => nil }
-    assert system(env, RbConfig.ruby, "-I", lib, "-e", code), "yaml was loaded without a config file"
+    assert system(env, RbConfig.ruby, "--disable-gems", "-I", lib, "-e", code),
+           "yaml was loaded without a config file"
   end
 
   def test_loads_and_sorts_replace_longest_first
