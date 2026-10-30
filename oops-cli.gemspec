@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.email = ["ysb3996@gmail.com"]
   spec.homepage = "https://github.com/ysb3996-blip/oops"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2"
+  spec.required_ruby_version = ">= 3.3"
   spec.files = Dir.chdir(__dir__) do
     (Dir["lib/**/*"] + Dir["exe/*"]).select { |f| File.file?(f) } + %w[README.md LICENSE CHANGELOG.md]
   end

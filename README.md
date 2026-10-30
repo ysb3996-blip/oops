@@ -17,7 +17,7 @@ gem install oops-cli
 
 Homebrew tap: coming soon.
 
-Requires Ruby 3.2 or newer on macOS or Linux (WSL counts as Linux), and zsh or bash. There are no runtime gem dependencies.
+Requires Ruby 3.3 or newer on macOS or Linux (WSL counts as Linux), and zsh or bash. There are no runtime gem dependencies.
 
 ## Set up your shell
 
@@ -170,7 +170,7 @@ gem build oops-cli.gemspec
 
 Never run `oops record` in the terminal you are working in; the tests drive it through their own pty.
 
-The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash. CI runs them on Ubuntu and macOS with Ruby 3.2, 3.3, 3.4 and 4.0.
+The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash. CI runs them on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0.
 
 Manual checklist before a release:
 

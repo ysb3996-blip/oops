@@ -50,7 +50,7 @@
 
 ## 3. 制約
 
-- Ruby 3.2 以上。実行時依存 gem は無し(stdlib のみ: `pty` `io/console` `optparse` `json` `yaml` `base64` など)。ネイティブ拡張なし。Homebrew での配布を簡単にするため
+- Ruby 3.3 以上。実行時依存 gem は無し(stdlib のみ: `pty` `io/console` `optparse` `json` `yaml` `base64` など)。ネイティブ拡張なし。Homebrew での配布を簡単にするため
 - OS: macOS、Linux。WSL は Linux 扱い
 - シェル: zsh、bash(macOS 同梱の 3.2 でも動くこと。bash 4 以降の機能に依存しない)
 - 外部コマンドへの依存はクリップボードツールのみ。実行時に検出し、無ければ代替か明確なエラーにする
@@ -368,7 +368,7 @@ OSC 52 のバイト列は子 pty を通って録画機に届くが、印では�
 
 - 単体テスト: 整形(制御文字除去、`\r`、伏せ字の各パターン、置き換え表、head/tail、囲みの 4 つ化、コマンド行への適用)、ログの後方読み、`err` の探索、録画機のストリーム解析(印の抽出、チャンク境界で割れた印、全画面区間、1MB 上限)。固定のバイト列をフィクスチャにする
 - 結合テスト: Ruby の `PTY.spawn` で `oops record -- bash --norc --noprofile` を起動し、`eval "$(oops init bash)"` を流し込み、コマンドを実行して `oops` の出力(`clipboard:` にテスト用コマンドを指定して受け取る)を検証する。zsh も同様(`zsh -f`)。ウィンドウサイズ変更が子に伝わることも検証する(`stty size` を変更前後で比較)。macOS と Ubuntu の両方で通す
-- CI: GitHub Actions、`ubuntu-latest` と `macos-latest` のマトリクス、Ruby 3.2 / 3.3
+- CI: GitHub Actions、`ubuntu-latest` と `macos-latest` のマトリクス、Ruby 3.3 / 3.4 / 4.0
 - 性能の確認: 20MB 一気出しで素の pty と比べて 2 倍以内(先の実測: 素 1.2 秒、Ruby リレー 1.2〜1.6 秒)、小さいコマンドで差が無いこと
 - 手動確認の項目(README の開発者向け節に): Ghostty / Terminal.app / VS Code 内蔵端末で印が見えないこと、vim・less・全画面の端末アプリをウィンドウサイズ変更しながら使えること、`exec zsh` で二重録画しないこと、`code .` で開いた VS Code 端末が録画されること
 - テストフレームワークは実装者の選択(Minitest なら追加依存なし。RSpec でもよい)
