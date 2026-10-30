@@ -1,4 +1,15 @@
 require_relative "test_helper"
+require "tempfile"
+
+# Lets a test make Tempfile.create fail without redefining it.
+module FailingTempfileCreate
+  def create(*, **, &)
+    raise Errno::ENOSPC, "test" if Thread.current[:oops_fail_tempfile]
+
+    super
+  end
+end
+Tempfile.singleton_class.prepend(FailingTempfileCreate)
 
 class ClipboardTest < Minitest::Test
   def detect(setting = "auto", env: {}, which: ->(_) { true }, platform: "x86_64-linux", proc_version: "")
@@ -60,6 +71,56 @@ class ClipboardTest < Minitest::Test
       assert_operator Process.clock_gettime(Process::CLOCK_MONOTONIC) - t, :<, 2
       assert_equal "hi", File.read("#{d}/c")
     end
+  end
+
+  def test_timeout_kills_the_whole_process_group
+    Dir.mktmpdir do |d|
+      argv = ["sh", "-c", "sleep 30 & echo $! > #{d}/pid; wait"]
+      err = assert_raises(Oops::Clipboard::Error) { Oops::Clipboard::Runner.run("slow", argv, "", timeout: 0.5) }
+      assert_equal "slow timed out after 0.5s", err.message
+      pid = File.read("#{d}/pid").to_i
+      deadline = Time.now + 3
+      sleep 0.05 while alive?(pid) && Time.now < deadline
+      refute alive?(pid), "the grandchild must be killed too"
+    end
+  end
+
+  def alive?(pid)
+    Process.kill(0, pid)
+    true
+  rescue Errno::ESRCH
+    false
+  end
+
+  def test_signal_killed_command_names_the_signal
+    err = assert_raises(Oops::Clipboard::Error) { Oops::Clipboard::Shell.new("kill -TERM $$").copy("x") }
+    assert_includes err.message, "killed by SIGTERM"
+    refute_includes err.message, "exit nil"
+  end
+
+  def test_stderr_in_the_error_is_capped
+    cmd = "i=0; while [ $i -lt 500 ]; do printf 'error line %s\\n' $i >&2; i=$((i+1)); done; exit 1"
+    err = assert_raises(Oops::Clipboard::Error) { Oops::Clipboard::Shell.new(cmd).copy("x") }
+    assert_operator err.message.bytesize, :<, 2200
+    assert_includes err.message, "error line 0"
+    assert err.message.end_with?("..."), err.message[-40..]
+  end
+
+  def test_temp_file_failure_becomes_a_clipboard_error
+    Thread.current[:oops_fail_tempfile] = true
+    err = assert_raises(Oops::Clipboard::Error) { Oops::Clipboard::Shell.new("cat").copy("x") }
+    assert_match(/\Acat: .*No space left/, err.message)
+  ensure
+    Thread.current[:oops_fail_tempfile] = nil
+  end
+
+  def test_osc52_uses_a_single_syswrite
+    calls = []
+    io = Object.new
+    io.define_singleton_method(:syswrite) { |data| (calls << data) && data.bytesize }
+    io.define_singleton_method(:write) { |_| raise "write must not be used" }
+    Oops::Clipboard::Osc52.new(tty: io).copy("hi")
+    assert_equal ["\e]52;c;aGk=\a"], calls
   end
 
   def test_command_with_utf16le_encoding

@@ -7,11 +7,13 @@ module Oops
 
     # Seconds to wait for a clipboard command before giving up.
     TIMEOUT = 5
+    # Bytes of a failing command's stderr kept in the error message.
+    MAX_STDERR = 2048
 
     # Shared process handling: text goes in through a temp file on stdin and
     # output goes to temp files, so a daemonized child (xclip, wl-copy) that
     # keeps inheriting those descriptors can never block us. We only wait for
-    # the direct child.
+    # the direct child; on a timeout its whole process group is killed.
     module Runner
       module_function
 
@@ -24,38 +26,54 @@ module Oops
             status = spawn_and_wait(label, argv, input, err, timeout)
             next if status.success?
 
-            raise Error, "#{label} failed (exit #{status.exitstatus.inspect}): #{read_all(err).strip}"
+            raise Error, "#{label} failed (#{describe(status)}): #{read_head(err)}"
           end
         end
+      rescue SystemCallError, IOError => e
+        raise Error, "#{label}: #{e.message}"
       end
 
       def spawn_and_wait(label, argv, input, err, timeout)
-        pid = Process.spawn(*argv, in: input, out: File::NULL, err: err)
+        pid = Process.spawn(*argv, in: input, out: File::NULL, err: err, pgroup: true)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
         loop do
           _, status = Process.wait2(pid, Process::WNOHANG)
           return status if status
 
           if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
-            kill(pid)
+            kill_group(pid)
             raise Error, "#{label} timed out after #{timeout}s"
           end
           sleep 0.01
         end
-      rescue SystemCallError => e
-        raise Error, "#{label}: #{e.message}"
       end
 
-      def kill(pid)
-        Process.kill("KILL", pid)
+      # The child leads its own process group, so this also ends anything it
+      # started that is still running.
+      def kill_group(pid)
+        begin
+          Process.kill("KILL", -pid)
+        rescue SystemCallError
+          Process.kill("KILL", pid)
+        end
         Process.wait(pid)
       rescue SystemCallError
         nil
       end
 
-      def read_all(file)
+      def describe(status)
+        return "exit #{status.exitstatus}" if status.exited?
+        return "killed by SIG#{Signal.signame(status.termsig)}" if status.signaled?
+
+        status.to_s
+      end
+
+      def read_head(file)
         file.rewind
-        file.read.to_s.force_encoding(Encoding::UTF_8).scrub
+        head = file.read(MAX_STDERR + 1).to_s
+        more = head.bytesize > MAX_STDERR
+        text = head.byteslice(0, MAX_STDERR).force_encoding(Encoding::UTF_8).scrub.strip
+        more ? "#{text} ..." : text
       end
     end
 
@@ -119,15 +137,24 @@ module Oops
         bytes.byteslice(start..)
       end
 
+      # One write(2) where possible, so the sequence is not split up between
+      # other output.
       def write(data)
-        if @tty.respond_to?(:write)
-          @tty.write(data)
-          @tty.flush if @tty.respond_to?(:flush)
+        if @tty.respond_to?(:syswrite)
+          write_all(@tty, data)
         else
-          File.write(@tty, data)
+          File.open(@tty, "wb") { |f| write_all(f, data) }
         end
       rescue SystemCallError, IOError => e
-        raise Error, "osc52: cannot write to #{@tty.respond_to?(:write) ? 'tty' : @tty}: #{e.message}"
+        raise Error, "osc52: cannot write to #{@tty.respond_to?(:syswrite) ? 'tty' : @tty}: #{e.message}"
+      end
+
+      def write_all(io, data)
+        data = data.b
+        until data.empty?
+          written = io.syswrite(data)
+          data = data.byteslice(written..)
+        end
       end
     end
 
