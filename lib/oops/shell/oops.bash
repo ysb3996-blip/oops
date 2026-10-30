@@ -231,6 +231,10 @@ if [[ $- == *i* ]] && [ -t 0 ] && [ -t 1 ] && [ -z "${OOPS_DISABLE:-}" ] &&
     # DEBUG traps set up later in it are kept. $1: `trap -p DEBUG`.
     __oops_install() {
       local prev=$1
+      if __oops_bp_present; then
+        __oops_use_bp
+        return 0
+      fi
       __oops_wrap "$__oops_e_install"
       case $prev in
         *__oops_debug*) __oops_trap= ;;
@@ -243,6 +247,61 @@ if [[ $- == *i* ]] && [ -t 0 ] && [ -t 1 ] && [ -z "${OOPS_DISABLE:-}" ] &&
       __oops_history_number
       __oops_armed=1
       return 0
+    }
+
+    # --- bash-preexec ---
+    #
+    # bash-preexec (behind atuin, Ghostty's bash integration and others) needs
+    # the same two things as the hooks above: the DEBUG trap, and its
+    # `__bp_interactive_mode` entry as the last PROMPT_COMMAND entry. Both of
+    # us wrapping PROMPT_COMMAND on every prompt broke recording (our arm
+    # entry used up its flag, and our entries piled up, which made its string
+    # clean-up crawl in bash 3.2). So when it is loaded, oops stops using its own
+    # DEBUG trap and PROMPT_COMMAND entries and registers with its arrays.
+
+    __oops_bp_present() { declare -F __bp_install >/dev/null 2>&1; }
+
+    # bash-preexec runs this with the line from history. When the line was
+    # not saved (HISTCONTROL, HISTIGNORE) that is an older line, and oops
+    # has nothing better than a placeholder: the DEBUG trap's $BASH_COMMAND
+    # is out of reach here.
+    __oops_bp_preexec() { __oops_preexec "(not saved in history)"; }
+
+    # bash-preexec restores $? before it calls each precmd function.
+    __oops_bp_precmd() {
+      __oops_precmd
+      local exit_status=$?
+      __oops_history_number
+      return "$exit_status"
+    }
+
+    # Drops our first-prompt entry from PROMPT_COMMAND; it has done its job.
+    # ":" is what bash-preexec cleans away itself.
+    __oops_forget_install_entry() {
+      local i
+      if __oops_pc_is_array; then
+        for i in "${!PROMPT_COMMAND[@]}"; do
+          PROMPT_COMMAND[$i]=${PROMPT_COMMAND[$i]//"$__oops_e_install"/:}
+        done
+      else
+        PROMPT_COMMAND=${PROMPT_COMMAND:-}
+        PROMPT_COMMAND=${PROMPT_COMMAND//"$__oops_e_install"/:}
+      fi
+    }
+
+    __oops_use_bp() {
+      __oops_bp=1
+      __oops_armed=
+      case " ${precmd_functions[*]:-} " in
+        *" __oops_bp_precmd "*) ;;
+        *) precmd_functions=(__oops_bp_precmd ${precmd_functions[@]+"${precmd_functions[@]}"}) ;;
+      esac
+      case " ${preexec_functions[*]:-} " in
+        *" __oops_bp_preexec "*) ;;
+        *) preexec_functions+=(__oops_bp_preexec) ;;
+      esac
+      __oops_forget_install_entry
+      __oops_history_number
     }
 
     # Once per shell process; sourcing ~/.bashrc again must not redo this.
@@ -263,11 +322,15 @@ if [[ $- == *i* ]] && [ -t 0 ] && [ -t 1 ] && [ -z "${OOPS_DISABLE:-}" ] &&
       export __OOPS_SEQ
       export __OOPS_PID=$$
     fi
-    # Again after a sourced rc file replaced PROMPT_COMMAND.
-    case ${PROMPT_COMMAND:-} in
-      *__oops_precmd* | *__oops_install*) ;;
-      *) PROMPT_COMMAND="${PROMPT_COMMAND:-}"$'\n'"$__oops_e_install" ;;
-    esac
+    if __oops_bp_present; then
+      __oops_use_bp
+    else
+      # Again after a sourced rc file replaced PROMPT_COMMAND.
+      case ${PROMPT_COMMAND:-} in
+        *__oops_precmd* | *__oops_install*) ;;
+        *) PROMPT_COMMAND="${PROMPT_COMMAND:-}"$'\n'"$__oops_e_install" ;;
+      esac
+    fi
   fi
   unset -f __oops_runs_script
 fi
