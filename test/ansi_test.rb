@@ -47,6 +47,18 @@ class AnsiTest < Minitest::Test
     assert_equal "a#{' ' * 200}b", Oops::Ansi.strip("a\e[99999Cb")
   end
 
+  def test_cursor_column_jump_separates_words
+    # Full-screen UIs place every word with ESC [ n G instead of printing spaces.
+    assert_equal "Accessing workspace:", Oops::Ansi.strip("\e[2G\e[1mAccessing\e[12Gworkspace:\e[22m")
+    assert_equal "a b c", Oops::Ansi.strip("a\e[5Gb\e[9Gc")
+  end
+
+  def test_cursor_column_jump_at_line_start_or_after_space_adds_nothing
+    assert_equal "  x", Oops::Ansi.strip("  \e[3Gx")
+    assert_equal "x\ny", Oops::Ansi.strip("x\n\e[2Gy")
+    assert_equal "a", Oops::Ansi.strip("\e[1Ga")
+  end
+
   def test_crlf_is_single_newline
     assert_equal "a\nb\n", Oops::Ansi.strip("a\r\nb\r\n")
   end
