@@ -2,6 +2,8 @@
 
 [English](README.md) | 日本語
 
+[![Gem Version](https://img.shields.io/gem/v/oops-cli)](https://rubygems.org/gems/oops-cli) [![CI](https://github.com/ysb3996-blip/oops/actions/workflows/ci.yml/badge.svg)](https://github.com/ysb3996-blip/oops/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 直前のシェルコマンドとその出力を、貼り付けられる形でクリップボードにコピーします。
 
 コマンドを実行して失敗した。その結果をチャットのアシスタントや Slack の同僚、GitHub の issue に見せたい。普通は、出力をドラッグで選択してコピーし、貼り付けて、コードフェンスを自分で付ける、という手間がかかります。oops なら 2 ステップです。
