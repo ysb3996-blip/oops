@@ -75,10 +75,13 @@ module Oops
       "unknown (#{e.message})"
     end
 
+    # Counts the session logs themselves, not their .status/.paused files.
     def sessions_line(dir)
-      files = Dir.glob(File.join(dir, "*")).select { |f| File.file?(f) }
-      bytes = files.sum { |f| File.size(f) }
-      "sessions: #{files.size} files, #{format('%.1f', bytes / 1_048_576.0)} MB"
+      return "sessions: 0 logs, 0.0 MB" unless File.directory?(dir)
+
+      logs = Dir.children(dir).map { |n| File.join(dir, n) }.select { |f| f.end_with?(".jsonl") && File.file?(f) }
+      bytes = logs.sum { |f| File.size(f) }
+      "sessions: #{logs.size} #{logs.size == 1 ? 'log' : 'logs'}, #{format('%.1f', bytes / 1_048_576.0)} MB"
     rescue SystemCallError
       "sessions: unreadable"
     end
@@ -94,10 +97,9 @@ module Oops
       rc = File.join(home, ".bashrc")
       return [] unless File.file?(rc)
 
-      text = File.read(rc).force_encoding(Encoding::UTF_8).scrub
-      lines = text.lines.map(&:strip).reject { |l| l.start_with?("#") }
+      lines = after_init_line(File.read(rc).force_encoding(Encoding::UTF_8).scrub)
       out = []
-      if lines.any? { |l| l.match?(/\Atrap\b.*\bDEBUG\b/) }
+      if lines.any? { |l| sets_debug_trap?(l) }
         out << "warning: ~/.bashrc sets a DEBUG trap, which can replace the oops hook; " \
                "set it before the oops init line or chain it"
       end
@@ -108,6 +110,24 @@ module Oops
       out
     rescue SystemCallError, IOError
       []
+    end
+
+    # The rc lines after the `oops init bash` line, without comments. Settings
+    # made before that line are taken over by the snippet, so only later ones
+    # can drop the hooks; without an init line there is nothing to check.
+    def after_init_line(text)
+      lines = text.lines.map { |l| l.strip.sub(/(?:\A|\s+)#.*\z/, "") }
+      init = lines.index { |l| l.match?(/oops['"]?\s+init\s+bash\b/) }
+      init ? lines.drop(init + 1) : []
+    end
+
+    # `trap ... DEBUG` that sets a trap; `trap - DEBUG` (reset), `trap -p`
+    # and `trap -l` do not.
+    def sets_debug_trap?(line)
+      args = line[/\Atrap\s+(.*)/, 1]
+      return false if args.nil? || args.match?(/\A-(?:[pl]\b|\s|\z)/)
+
+      args.match?(/\bDEBUG\b/)
     end
   end
 end

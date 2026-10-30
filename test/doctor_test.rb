@@ -20,7 +20,7 @@ class DoctorTest < Minitest::Test
     out = report
     assert_includes out, "recording: no\n"
     assert_includes out, "shell: zsh 5.9, hooks: missing\n"
-    assert_includes out, "sessions: 0 files, 0.0 MB\n"
+    assert_includes out, "sessions: 0 logs, 0.0 MB\n"
     assert_match(/^ruby: #{Regexp.escape(RUBY_VERSION)} /, out)
     assert_match(/^config: .*config.yml \(missing\)$/, out)
   end
@@ -39,7 +39,7 @@ class DoctorTest < Minitest::Test
     assert_includes out, "log writable: yes (ok)\n"
     assert_includes out, "paused: yes\n"
     assert_includes out, "hooks: installed"
-    assert_includes out, "sessions: 3 files, 1.0 MB\n"
+    assert_includes out, "sessions: 1 log, 1.0 MB\n", "sidecar files are not counted"
   end
 
   def test_reports_log_error_from_status_file
@@ -65,16 +65,33 @@ class DoctorTest < Minitest::Test
     refute_includes out, "warning"
   end
 
-  def test_warns_about_bashrc_debug_trap_and_prompt_command
-    File.write(File.join(@dir, ".bashrc"), "trap 'x' DEBUG\nPROMPT_COMMAND='y'\n")
-    out = report(@env.merge("SHELL" => "/bin/bash"))
+  def bash_report(bashrc)
+    File.write(File.join(@dir, ".bashrc"), bashrc)
+    report(@env.merge("SHELL" => "/bin/bash"))
+  end
+
+  INIT = %(eval "$(oops init bash)"\n).freeze
+
+  def test_warns_about_bashrc_debug_trap_and_prompt_command_after_the_init_line
+    out = bash_report("#{INIT}trap 'x' DEBUG\nPROMPT_COMMAND='y'\n")
     assert_includes out, "DEBUG trap"
+    assert_includes out, "PROMPT_COMMAND without appending"
+    out = bash_report("eval \"$('/opt/oops/exe/oops' init bash)\"\nexport PROMPT_COMMAND=y\n")
     assert_includes out, "PROMPT_COMMAND without appending"
   end
 
+  def test_no_bash_warnings_before_the_init_line_or_without_one
+    refute_includes bash_report("trap 'x' DEBUG\nPROMPT_COMMAND='y'\n#{INIT}"), "warning"
+    refute_includes bash_report("trap 'x' DEBUG\nPROMPT_COMMAND='y'\n"), "warning"
+  end
+
+  def test_debug_trap_resets_listings_and_comments_are_not_warned_about
+    rc = "#{INIT}trap - DEBUG\ntrap -p DEBUG\ntrap -l\ntrap 'cleanup' EXIT # not DEBUG\n# trap x DEBUG\n"
+    refute_includes bash_report(rc), "warning"
+  end
+
   def test_appending_prompt_command_is_fine
-    File.write(File.join(@dir, ".bashrc"), "PROMPT_COMMAND=\"$PROMPT_COMMAND; y\"\n")
-    refute_includes report(@env.merge("SHELL" => "/bin/bash")), "warning"
+    refute_includes bash_report("#{INIT}PROMPT_COMMAND=\"$PROMPT_COMMAND; y\"\n"), "warning"
   end
 
   def test_not_the_recorded_tty_names_both_ttys
