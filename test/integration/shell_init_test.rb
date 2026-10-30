@@ -410,4 +410,97 @@ class ShellInitIntegrationTest < Minitest::Test
     assert_includes @out, "oops: cannot run #{@home}/gone/oops; recording disabled"
     assert_empty session_logs
   end
+
+  # --- terminal shell integration (Ghostty) ---
+
+  # A stand-in for Ghostty's zsh integration. Like the real one it is injected
+  # through ZDOTDIR; its .zshenv removes the injection again and loads the
+  # integration, which logs every shell that loads it (once per shell).
+  def install_fake_ghostty
+    dir = "#{@home}/ghostty/shell-integration/zsh"
+    FileUtils.mkdir_p(dir)
+    File.write("#{dir}/ghostty-integration", <<~ZSH)
+      (( ! $+_ghostty_state )) || return 0
+      typeset -gi _ghostty_state=0
+      print -r -- "loaded $$" >> "#{@home}/ghostty.log"
+    ZSH
+    File.write("#{dir}/.zshenv", <<~ZSH)
+      builtin unset ZDOTDIR
+      if [[ -o interactive ]]; then
+        autoload -Uz "#{dir}/ghostty-integration"
+        ghostty-integration
+        unfunction ghostty-integration
+      fi
+    ZSH
+    dir
+  end
+
+  def ghostty_loads = File.exist?("#{@home}/ghostty.log") ? File.readlines("#{@home}/ghostty.log").uniq.size : 0
+
+  # oops restarts the shell, and the restarted one no longer gets the
+  # integration the terminal injected: it has to load it again.
+  def test_zsh_recorded_shell_loads_ghosttys_integration_again
+    skip_without_zsh
+    dir = install_fake_ghostty
+    @env.update("ZDOTDIR" => dir, "GHOSTTY_RESOURCES_DIR" => "#{@home}/ghostty")
+    write_zshrc
+    spawn_shell("zsh", "-i")
+    run_line("echo recorded-$((1+1))")
+    assert_equal 1, session_logs.size, "the tab should be recorded"
+    assert_equal 2, ghostty_loads, "outer and restarted shell should each have loaded the integration"
+  end
+
+  # GHOSTTY_RESOURCES_DIR is set even when the user turned shell integration
+  # off; oops must not switch it on.
+  def test_zsh_recorded_shell_does_not_load_ghosttys_integration_when_it_is_off
+    skip_without_zsh
+    install_fake_ghostty
+    @env["GHOSTTY_RESOURCES_DIR"] = "#{@home}/ghostty"
+    write_zshrc
+    spawn_shell("zsh", "-i")
+    run_line("echo recorded-$((1+1))")
+    assert_equal 1, session_logs.size
+    assert_equal 0, ghostty_loads
+  end
+
+  # An inherited flag from an earlier tab must not turn the integration on in
+  # a tab whose terminal did not inject it.
+  def test_zsh_stale_flag_does_not_load_ghosttys_integration
+    skip_without_zsh
+    install_fake_ghostty
+    @env.update("GHOSTTY_RESOURCES_DIR" => "#{@home}/ghostty", "__OOPS_GHOSTTY" => "1")
+    write_zshrc
+    spawn_shell("zsh", "-i")
+    run_line("echo recorded-$((1+1))")
+    assert_equal 1, session_logs.size
+    assert_equal 0, ghostty_loads
+  end
+
+  # --- bash-preexec ---
+
+  # bash-preexec (also behind atuin, Ghostty's bash integration and others)
+  # wants to own the DEBUG trap and the end of PROMPT_COMMAND, as oops's own
+  # hooks do. oops hands its hooks to it instead. The real files are checked in
+  # as fixtures; the order of the two rc lines must not matter.
+  %w[0.6.0 0.7.0].each do |version|
+    %i[before after].each do |order|
+      define_method("test_bash_with_bash_preexec_#{version.tr('.', '_')}_loaded_#{order}_records_every_command") do
+        preexec = %(source "#{File.expand_path("../fixtures/bash-preexec/#{version}/bash-preexec.sh", __dir__)}"\n)
+        order == :before ? write_bashrc(before: preexec) : write_bashrc(after: preexec)
+        spawn_shell("bash", "-i")
+        assert_equal 1, run_line("echo hello; false")
+        assert_equal 3, run_line("sh -c 'exit 3'")
+        run_line("echo aa bb")
+        run_line(%(echo "last=$_"))
+        run_line("echo fifth")
+
+        assert_equal ["echo hello; false", "sh -c 'exit 3'", "echo aa bb", %(echo "last=$_"), "echo fifth"],
+                     records.map(&:cmd)
+        assert_equal [1, 3, 0, 0, 0], records.map(&:exit)
+        assert_equal [1, 2, 3, 4, 5], records.map(&:seq)
+        assert_equal "last=bb\r\n", records[3].output
+        refute_includes @out, "\e_oops;"
+      end
+    end
+  end
 end

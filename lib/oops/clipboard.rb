@@ -7,6 +7,11 @@ module Oops
 
     # Seconds to wait for a clipboard command before giving up.
     TIMEOUT = 5
+    # The wait polls for the command's exit: it starts with short sleeps (the
+    # command usually finishes within a few milliseconds) and doubles up to
+    # POLL_MAX.
+    POLL_MIN = 0.001
+    POLL_MAX = 0.01
     # Bytes of a failing command's stderr kept in the error message.
     MAX_STDERR = 2048
 
@@ -36,6 +41,7 @@ module Oops
       def spawn_and_wait(label, argv, input, err, timeout)
         pid = Process.spawn(*argv, in: input, out: File::NULL, err: err, pgroup: true)
         deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout
+        delay = POLL_MIN
         loop do
           _, status = Process.wait2(pid, Process::WNOHANG)
           return status if status
@@ -44,7 +50,8 @@ module Oops
             kill_group(pid)
             raise Error, "#{label} timed out after #{timeout}s"
           end
-          sleep 0.01
+          sleep delay
+          delay = [delay * 2, POLL_MAX].min
         end
       end
 

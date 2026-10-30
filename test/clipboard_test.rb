@@ -73,6 +73,23 @@ class ClipboardTest < Minitest::Test
     end
   end
 
+  # A clipboard command usually exits within a few milliseconds, so the wait
+  # starts with short sleeps and only then settles at the long one.
+  def test_waiting_for_the_command_starts_with_short_sleeps
+    delays = []
+    runner = Oops::Clipboard::Runner
+    runner.singleton_class.send(:define_method, :sleep) do |seconds|
+      delays << seconds
+      super(seconds)
+    end
+    runner.run("slow", ["sh", "-c", "sleep 0.1"], "")
+    assert_operator delays.first, :<=, 0.002
+    assert_operator delays.max, :<=, 0.01
+    assert_equal delays.sort, delays
+  ensure
+    runner.singleton_class.send(:remove_method, :sleep)
+  end
+
   def test_timeout_kills_the_whole_process_group
     Dir.mktmpdir do |d|
       argv = ["sh", "-c", "sleep 30 & echo $! > #{d}/pid; wait"]

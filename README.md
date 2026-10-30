@@ -34,6 +34,7 @@ Where to put the line matters:
 
 - Put it **after** whatever puts the Ruby that has oops on your `PATH` (rbenv, asdf, mise, Homebrew `shellenv`, and so on). On macOS, login shells reset `PATH`, so if the line comes first, the system Ruby 2.6 may be picked and oops will not start. If oops cannot run, your shell still starts normally, just without recording.
 - Put it **before** slow or noisy setup that you do not want to run twice (nvm, prompt themes, banners). The snippet starts your shell again under a small recorder (`oops record`, a pty relay), so anything above the line runs once in the outer shell and again in the inner one. Anything below it runs only in the inner shell.
+- With powerlevel10k, put the line **above** the instant prompt block at the top of `~/.zshrc`. The instant prompt redirects the shell's input and output while the rest of `~/.zshrc` runs, and the snippet does nothing then (it only acts on a real terminal), so oops would silently not record. If a tab is not recorded although the line is in `~/.zshrc`, run `oops doctor`: it shows `recording: no`.
 - In zsh the shell is restarted as a non-login shell, so setup that lives only in `~/.zlogin` is not applied to the recorded shell. Keep it in `~/.zprofile` or `~/.zshrc` (above the line). In bash, a login shell is restarted with `-l`.
 
 If something looks wrong, run `oops doctor`. It reports whether this tab is recorded, the shell and whether the hooks are loaded, which clipboard method will be used, the config file, the size of the session logs, and the Ruby version.
@@ -134,7 +135,9 @@ clipboard: auto     # auto | pbcopy | wl-copy | xclip | xsel | clip.exe | osc52 
 - With `clipboard: auto`, oops tries `pbcopy` on macOS, `clip.exe` on WSL, `wl-copy` on Wayland, `xclip` or `xsel` on X11, and falls back to the OSC 52 terminal escape sequence (also used over SSH). `oops doctor` shows which one it picked.
 - A custom `clipboard:` command runs in its own process group with a 5 second timeout, so it must not read from or configure the terminal (no password prompts, no `stty`); Ctrl-C during a copy does not reach it.
 
-Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authorization` header values, private key blocks, values assigned to names containing `key`, `token`, `secret`, `password`, `passwd` or `pwd`, email addresses, credentials inside URLs, and public IPv4 addresses (loopback and private ranges are left alone). It is applied to the command line as well as the output.
+Built-in masking covers AWS access keys, GitHub, GitLab, Slack, npm, OpenAI/Anthropic (`sk-...`), Stripe and Google API tokens, Slack webhook URLs, JWTs, `Authorization` header values, private key blocks (also when the END line is missing), values assigned to names containing `key`, `token`, `secret`, `password`, `passwd` or `pwd`, passwords given as `--password <value>`, `curl -u user:pass`, `mysql -p<value>` or `docker login -p <value>`, email addresses, credentials inside URLs, and public IPv4 addresses (loopback and private ranges are left alone). It is applied to the command line as well as the output.
+
+Masking is pattern based, so it is a safety net, not a guarantee: a secret in a format it does not know (a bare password printed on its own line, for example) is copied as it is. Read what you are about to paste, and add your own patterns under `secrets:` in the config file.
 
 ## How it works
 
@@ -158,6 +161,10 @@ Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authori
 - Commands longer than 8192 characters are truncated in the recorded command line.
 - Output of full-screen apps (vim, less, tmux and so on) is not kept; it is replaced by `[full-screen app output omitted]`.
 - A command line that starts with a space is recorded in zsh but dropped in bash (bash does not save it to history, which is where oops reads the command).
+- bash with [bash-preexec](https://github.com/rcaloras/bash-preexec) (also behind atuin and Ghostty's bash integration): oops registers its hooks with it instead of using its own `DEBUG` trap, whichever of the two comes first in your rc file. A line that bash did not save to history (`HISTCONTROL=ignorespace`, `HISTIGNORE`) is then recorded as `(not saved in history)`, because the text of the line is read from history there. Without bash-preexec, oops records the first command of such a line instead.
+- bash in Ghostty: Ghostty adds its shell integration (prompt marks, new tabs in the same directory, titles) only to the outer shell, so the recorded shell does not get it. To add it back, put this below the oops line in `~/.bashrc` (checked with bash 3.2): `[ -n "$GHOSTTY_RESOURCES_DIR" ] && source "$GHOSTTY_RESOURCES_DIR/shell-integration/bash/ghostty.bash"`. zsh needs nothing: the snippet does it.
+- bash: the line after a pipeline sees `PIPESTATUS` with only the last status (`false | true`, then `echo ${PIPESTATUS[*]}` prints `0`, not `1 0`), because oops's `PROMPT_COMMAND` entry runs first. `$?` and `$_` are kept. A prompt that shows pipeline statuses (starship's `pipestatus`) shows less in bash. zsh keeps `pipestatus`.
+- macOS: `pbcopy` chooses its text encoding from `LANG` / `LC_*`. If Japanese or other non-ASCII text arrives garbled, check that a UTF-8 locale is set (for example `LANG=en_US.UTF-8`), which can be missing in shells started over SSH.
 - fish and native Windows are not supported yet.
 
 ## Development

@@ -79,6 +79,71 @@ class SecretsTest < Minitest::Test
     assert_equal ['password="[secret]', 1], mask('password="abc')
   end
 
+  def test_private_key_without_end_line_masked_to_the_end
+    assert_equal ["head\n[secret]", 1], mask("head\n-----BEGIN OPENSSH PRIVATE KEY-----\nb3Blbn\nAAAAB\n")
+  end
+
+  def test_private_key_with_end_line_keeps_text_after_it
+    key = "-----BEGIN RSA PRIVATE KEY-----\nMIIE\n-----END RSA PRIVATE KEY-----\nafter"
+    assert_equal ["[secret]\nafter", 1], mask(key)
+  end
+
+  def test_provider_tokens_masked
+    {
+      "sk-proj-#{'a1B2' * 8}" => "[secret]",
+      "sk-ant-api03-#{'a1B2' * 8}" => "[secret]",
+      "key sk_live_#{'a1B2' * 6}" => "key [secret]",
+      "glpat-#{'a1B2' * 5}" => "[secret]",
+      "AIza#{'a1B2' * 8}xyz" => "[secret]",
+      "npm_#{'a1B2' * 9}" => "[secret]"
+    }.each { |input, expected| assert_equal [expected, 1], mask(input), input }
+  end
+
+  def test_short_or_embedded_prefixes_are_not_tokens
+    %w[sk-1 task-list-item-name-that-is-long-enough npm_run
+       ask-me-anything-about-this-long-thing].each do |text|
+      assert_equal [text, 0], mask(text)
+    end
+  end
+
+  def test_slack_webhook_url
+    url = "https://hooks.slack.com/services/T0123ABCD/B0123ABCD/abcdEFGH1234"
+    assert_equal ["https://hooks.slack.com/services/[secret]", 1], mask(url)
+  end
+
+  def test_authorization_token_scheme
+    assert_equal ["Authorization: token [secret]", 1], mask("Authorization: token ghx123abc")
+  end
+
+  def test_password_option_with_space_separated_value
+    assert_equal ["mycli --password [secret] --host h", 1], mask("mycli --password hunter2 --host h")
+    assert_equal ["mycli --password \"[secret]\"", 1], mask("mycli --password \"two words\"")
+    assert_equal ["mycli --password --host h", 0], mask("mycli --password --host h")
+  end
+
+  def test_curl_user_option
+    assert_equal ["curl -u [secret] https://x.io", 1], mask("curl -u alice:hunter2 https://x.io")
+    assert_equal ["curl -s --user [secret] x", 1], mask("curl -s --user alice:hunter2 x")
+    assert_equal ["ls -u alice:bob", 0], mask("ls -u alice:bob")
+  end
+
+  def test_mysql_attached_password_option
+    assert_equal ["mysql -u root -p[secret] db", 1], mask("mysql -u root -phunter2 db")
+    assert_equal ["mysql -u root -p db", 0], mask("mysql -u root -p db")
+  end
+
+  def test_docker_login_password_option
+    assert_equal ["docker login -u me -p [secret] r.io", 1], mask("docker login -u me -p hunter2 r.io")
+  end
+
+  # Guards against quadratic matching; bounds are loose to avoid flakiness.
+  def test_keyword_stuffed_lines_stay_linear
+    ["key" * 30_000, "x.pwd." * 5_000, "token_" * 20_000, "curl " * 40_000, "mysql " * 40_000,
+     "docker login " * 20_000, "a" * 200_000].each do |text|
+      assert_operator elapsed { mask(text) }, :<, 2.0
+    end
+  end
+
   # Guards against quadratic matching; bounds are loose to avoid flakiness.
   def test_long_single_line_inputs_stay_linear
     ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},'].each do |unit|

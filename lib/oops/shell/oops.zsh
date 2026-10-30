@@ -35,6 +35,11 @@ if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" 
           __oops_zsh=${$(command -v -- "$__oops_zsh" 2>/dev/null):-$__oops_zsh}
         fi
       fi
+      # Ghostty injects its shell integration through ZDOTDIR and removes the
+      # injection again, so the restarted shell would not get it. Note
+      # whether this one has it (the integration sets _ghostty_state), so
+      # the restarted shell can load it again; see the end of this block.
+      if (( $+_ghostty_state )); then export __OOPS_GHOSTTY=1; else unset __OOPS_GHOSTTY; fi
       exec "$__oops_bin" record -- "$__oops_zsh"
     else
       print -ru2 -- "oops: cannot run $__oops_bin; recording disabled"
@@ -84,5 +89,14 @@ if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" 
     fi
     add-zsh-hook preexec __oops_preexec
     add-zsh-hook precmd __oops_precmd
+
+    # The shell this one replaced had Ghostty's integration (see above); load
+    # it here too, as Ghostty documents for a manual setup. It does nothing
+    # when it is already loaded. This comes after the hooks above, so
+    # __oops_precmd stays the first precmd hook and sees $?.
+    if [[ -n "${__OOPS_GHOSTTY:-}" && -n "${GHOSTTY_RESOURCES_DIR:-}" &&
+          -r "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
+      builtin source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
+    fi
   fi
 fi

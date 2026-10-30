@@ -1,4 +1,5 @@
 require "test_helper"
+require "pty"
 class CLITest < Minitest::Test
   def test_version_prints_version_and_exits_zero
     out = StringIO.new
@@ -87,6 +88,12 @@ class CLICopyTest < Minitest::Test
   end
 
   def clip = File.read(@clip)
+
+  # What was written to the slave side of a pty, as the master reads it.
+  def read_available(master)
+    master.wait_readable(2)
+    master.read_nonblock(4096)
+  end
 
   def test_not_recording_message_exits_one
     assert_equal [1, "", NOT_RECORDING_ZSH], run_cli(env: @env.merge("OOPS_SESSION" => nil))
@@ -261,6 +268,26 @@ class CLICopyTest < Minitest::Test
     Oops::CLI.run(["pause"], env: @env, stdout: out, stderr: StringIO.new)
     Oops::CLI.run(["resume"], env: @env, stdout: out, stderr: StringIO.new)
     assert_equal [true, false], seen
+  end
+
+  # With stdout redirected (`oops pause >/dev/null`) the marker would never
+  # reach the recorder, while the flag file already says "paused".
+  def test_pause_marker_goes_to_the_recorded_terminal_not_stdout
+    master, slave = PTY.open
+    env = @env.merge("OOPS_TTY" => slave.path)
+    assert_equal [0, "", ""], run_cli("pause", env: env)
+    assert_equal Oops::Marker.pause, read_available(master)
+    assert_equal [0, "", ""], run_cli("resume", env: env)
+    assert_equal Oops::Marker.resume, read_available(master)
+  ensure
+    master&.close
+    slave&.close
+  end
+
+  def test_pause_marker_falls_back_to_stdout_when_the_terminal_cannot_be_opened
+    env = @env.merge("OOPS_TTY" => File.join(@dir, "no", "such", "tty"))
+    assert_equal [0, Oops::Marker.pause, ""], run_cli("pause", env: env)
+    assert_predicate @log, :paused?
   end
 
   def test_pause_and_resume_require_recording

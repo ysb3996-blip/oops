@@ -1,4 +1,3 @@
-require "yaml"
 require_relative "paths"
 
 module Oops
@@ -25,6 +24,9 @@ module Oops
     def read(path)
       return unless File.file?(path)
 
+      # Loaded here, not at the top: most runs have no config file, and the
+      # library takes about 5 ms to load.
+      require "yaml"
       data = YAML.safe_load_file(path)
       return if data.nil?
       return @warnings << "could not parse #{path}: top level must be a mapping" unless data.is_a?(Hash)
