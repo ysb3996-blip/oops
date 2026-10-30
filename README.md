@@ -165,7 +165,7 @@ gem build oops-cli.gemspec
 
 Never run `oops record` in the terminal you are working in; the tests drive it through their own pty.
 
-The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash. CI runs them on Ubuntu and macOS with Ruby 3.2 and 3.3.
+The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash. CI runs them on Ubuntu and macOS with Ruby 3.2, 3.3, 3.4 and 4.0.
 
 Manual checklist before a release:
 
