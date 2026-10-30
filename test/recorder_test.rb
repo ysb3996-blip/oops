@@ -96,6 +96,54 @@ class RecorderTest < Minitest::Test
     end
   end
 
+  def test_unexpected_relay_error_warns_once_and_the_relay_goes_on
+    err = StringIO.new
+    stdin_r, stdin_w = IO.pipe
+    rec = Oops::Recorder.new(%w[sh], env: {}, stdin: stdin_r, stdout: StringIO.new, stderr: err)
+    output_r, output_w = IO.pipe
+    wake_r, wake_w = IO.pipe
+    output_w.write("x") # keeps the fake pty readable
+    pid = Process.spawn("true")
+    { master: output_r, wake_r: wake_r, pid: pid,
+      filter: Oops::Recorder::OutputFilter.new(log: nil, on_error: ->(m) { flunk m }) }.each do |k, v|
+      rec.instance_variable_set(:"@#{k}", v)
+    end
+    calls = 0
+    rec.define_singleton_method(:read_output) do
+      calls += 1
+      raise "boom" if calls <= 2
+
+      @output_open = false
+    end
+    rec.send(:relay)
+    assert_equal 3, calls
+    assert_equal "oops: warning: unexpected relay error (RuntimeError: boom); continuing\n", err.string
+  ensure
+    Process.wait(pid) if pid && !rec.instance_variable_get(:@status)
+    [stdin_r, stdin_w, output_r, output_w, wake_r, wake_w].each { |io| io&.close }
+  end
+
+  def test_stdin_hangup_on_a_terminal_hangs_up_the_shell
+    stdin = Object.new
+    stdin.define_singleton_method(:tty?) { true }
+    stdin.define_singleton_method(:readpartial) { |_| raise Errno::EIO }
+    rec = Oops::Recorder.new(%w[sh], env: {}, stdin: stdin, stdout: StringIO.new, stderr: StringIO.new)
+    pid = Process.spawn("sleep", "10")
+    rec.instance_variable_set(:@pid, pid)
+    rec.instance_variable_set(:@input, +"".b)
+    rec.send(:read_input)
+    refute rec.instance_variable_get(:@stdin_open)
+    assert_equal Signal.list["HUP"], Process.wait2(pid)[1].termsig
+    pid = nil
+  ensure
+    begin
+      Process.kill("KILL", pid) if pid
+      Process.wait(pid) if pid
+    rescue SystemCallError
+      nil
+    end
+  end
+
   def test_shell_that_cannot_start_falls_back_to_exec
     Dir.mktmpdir do |dir|
       err = StringIO.new

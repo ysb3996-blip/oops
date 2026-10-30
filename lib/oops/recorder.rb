@@ -16,6 +16,9 @@ module Oops
     MAX_PENDING_INPUT = 1_048_576
     # Backstop for a missed SIGCHLD; normally the self-pipe wakes the loop.
     POLL_INTERVAL = 1.0
+    # Pause after an unexpected error in the relay loop, so an error that
+    # repeats cannot spin the CPU.
+    ERROR_BACKOFF = 0.05
 
     # The shell could not be started on the new pty.
     class ChildStartError < StandardError; end
@@ -95,6 +98,10 @@ module Oops
       @pid = pid
       @filter = OutputFilter.new(log: log, on_error: method(:log_failed))
       with_raw_mode { relay }
+      # Waited for with the terminal already restored: a shell that closed
+      # the pty but keeps running must not leave the terminal raw.
+      @status ||= Process.wait2(@pid)[1]
+      exit_code(@status)
     ensure
       restore_traps
       @master.close if @master && !@master.closed?
@@ -290,11 +297,22 @@ module Oops
       step while @output_open && @status.nil?
       drain_output if @output_open
       write_terminal(@filter.finish)
-      @status ||= Process.wait2(@pid)[1]
-      exit_code(@status)
     end
 
+    # Errors the relay expects (EIO, EOF, EPIPE) are handled where they
+    # occur; anything else is reported once and the relay goes on, because
+    # ending it would hang up the shell.
     def step
+      relay_step
+    rescue StandardError => e
+      unless @relay_error_reported
+        @relay_error_reported = true
+        warn_line "oops: warning: unexpected relay error (#{e.class}: #{e.message}); continuing"
+      end
+      sleep ERROR_BACKOFF
+    end
+
+    def relay_step
       readers = [@master, @wake_r]
       readers << @stdin if @stdin_open && @input.bytesize < MAX_PENDING_INPUT
       writers = @input.empty? ? nil : [@master]
@@ -312,10 +330,13 @@ module Oops
       copy_winsize(@master) if signals.is_a?(String) && signals.include?("W")
     end
 
+    # The user's terminal went away: hang up the shell, as closing a
+    # terminal window does.
     def read_input
       @input << @stdin.readpartial(READ_SIZE).b
     rescue EOFError, Errno::EIO
       @stdin_open = false
+      hang_up_shell if @stdin.tty?
     end
 
     def write_input
@@ -361,11 +382,13 @@ module Oops
     rescue Errno::EIO, Errno::EPIPE
       # The terminal is gone; hang up the shell as closing it would.
       @terminal_gone = true
-      begin
-        Process.kill("HUP", @pid)
-      rescue SystemCallError
-        nil
-      end
+      hang_up_shell
+    end
+
+    def hang_up_shell
+      Process.kill("HUP", @pid)
+    rescue SystemCallError
+      nil
     end
 
     def exit_code(status)
