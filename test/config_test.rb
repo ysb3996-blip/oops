@@ -9,6 +9,15 @@ class ConfigTest < Minitest::Test
     assert_equal [], c.warnings
   end
 
+  # Reading the YAML library costs about 5 ms, which most runs (no config
+  # file) do not need to pay.
+  def test_yaml_is_not_loaded_without_a_config_file
+    code = 'require "oops"; Oops::Config.load("/nonexistent/config.yml"); ' \
+           "exit($LOADED_FEATURES.grep(/psych|yaml/).empty? ? 0 : 1)"
+    lib = File.expand_path("../lib", __dir__)
+    assert system(RbConfig.ruby, "-I", lib, "-e", code), "yaml was loaded without a config file"
+  end
+
   def test_loads_and_sorts_replace_longest_first
     Dir.mktmpdir do |d|
       File.write("#{d}/c.yml", "replace:\n  ab: x\n  abcd: y\nsecrets:\n  - 'sk_\\w+'\nclipboard: pbcopy\nbogus: 1\n")
