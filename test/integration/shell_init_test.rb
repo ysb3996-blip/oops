@@ -9,13 +9,18 @@ require "fileutils"
 class ShellInitIntegrationTest < Minitest::Test
   EXE = File.expand_path("../../exe/oops", __dir__)
   PROMPT = /\[st=(\d+)\][$%] /
-  UTF8_LOCALE = %w[C.UTF-8 en_US.UTF-8].find { |l| `locale -a 2>/dev/null`.lines.map(&:strip).include?(l) }
+  # `command` and friends are shell builtins, so resolve them through `sh -c`.
+  def self.sh_capture(script) = IO.popen(["sh", "-c", script], err: File::NULL, &:read).to_s
+  UTF8_LOCALE = %w[C.UTF-8 en_US.UTF-8].find { |l| sh_capture("locale -a").lines.map(&:strip).include?(l) }
 
   def setup
     @home = Dir.mktmpdir
     @env = { "HOME" => @home, "XDG_STATE_HOME" => "#{@home}/state", "XDG_CONFIG_HOME" => "#{@home}/cfg",
              "PATH" => ENV.fetch("PATH", nil), "TERM" => "xterm", "LC_ALL" => UTF8_LOCALE,
-             "BASH_SILENCE_DEPRECATION_WARNING" => "1" }
+             "BASH_SILENCE_DEPRECATION_WARNING" => "1",
+             # Debian/Ubuntu's /etc/zsh/zshrc runs compinit unless this is set; on CI runners
+             # (group-writable dirs on fpath) it stops at an "insecure directories" prompt.
+             "skip_global_compinit" => "1" }
     %w[OOPS_TTY OOPS_SESSION OOPS_DISABLE __OOPS_SEQ __OOPS_PID ZDOTDIR PROMPT_COMMAND BASH_ENV ENV
        HISTCONTROL HISTFILE].each { |name| @env[name] = nil }
     @prompts = 0
@@ -68,7 +73,9 @@ class ShellInitIntegrationTest < Minitest::Test
     flunk "shell did not exit; screen so far:\n#{@out}"
   end
 
-  def bash_version = `bash -c 'echo "${BASH_VERSINFO[0]} ${BASH_VERSINFO[1]}"'`.split.map(&:to_i)
+  def bash_version
+    IO.popen(["bash", "-c", 'echo "${BASH_VERSINFO[0]} ${BASH_VERSINFO[1]}"'], &:read).split.map(&:to_i)
+  end
 
   def prompt_count = @out.scan(PROMPT).size
 
@@ -373,7 +380,7 @@ class ShellInitIntegrationTest < Minitest::Test
 
   def test_zsh_login_shell_restarts_the_same_zsh_binary
     skip_without_zsh
-    real = `command -v zsh`.strip
+    real = self.class.sh_capture("command -v zsh").strip
     FileUtils.mkdir_p("#{@home}/zbin")
     File.symlink(real, "#{@home}/zbin/zsh")
     @env["SHELL"] = "#{@home}/zbin/zsh"
