@@ -171,16 +171,54 @@ Masking is pattern based, so it is a safety net, not a guarantee: a secret in a 
 
 ## Development
 
+### Set up your machine
+
+You need Git, Ruby 3.3 or newer, [Bundler](https://bundler.io/) (it ships with Ruby), and both zsh and bash (the end-to-end tests start real shells). macOS has zsh and bash; on Debian or Ubuntu run `sudo apt-get install zsh`.
+
 ```sh
-bundle install
-bundle exec rake test
-bundle exec rubocop
-gem build oops-cli.gemspec
+git clone https://github.com/ysb3996-blip/oops.git
+cd oops
 ```
 
-Never run `oops record` in the terminal you are working in; the tests drive it through their own pty.
+The repository pins Ruby 4.0.9 in `.ruby-version`. With a version manager such as rbenv, asdf or mise, install that version (`rbenv install 4.0.9`, then `rbenv rehash`). Any Ruby 3.3 or newer also works if you delete or ignore the pin. Check with `ruby -v`.
 
-The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash. CI runs them on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0.
+```sh
+bundle install
+bundle exec rake test       # the whole test suite (takes about 30 seconds)
+bundle exec rubocop         # style check
+```
+
+CI runs both commands on Ubuntu and macOS with Ruby 3.3, 3.4 and 4.0, and also builds the gem, so run all three before opening a pull request:
+
+```sh
+bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
+```
+
+### Try your changes
+
+Run a single test file with `bundle exec ruby -Itest -Ilib test/ansi_test.rb`. To run the command straight from the checkout, without installing anything:
+
+```sh
+bundle exec exe/oops --version
+bundle exec exe/oops doctor
+```
+
+To try it as your shell does, build and install the gem into the Ruby you are using, then add the line from "Set up your shell" to a **new** tab:
+
+```sh
+gem build oops-cli.gemspec
+gem install ./oops-cli-0.1.0.gem     # the file name follows lib/oops/version.rb
+rbenv rehash                         # only with rbenv
+```
+
+- A gem is installed per Ruby version. If a new tab uses another Ruby than the one you installed into (for example the repository pins 4.0.9, but your global Ruby is 3.3.5), the shell prints `oops: command not found`. Run `gem install` again under that Ruby, e.g. `RBENV_VERSION=3.3.5 gem install ./oops-cli-0.1.0.gem`.
+- Reinstall after every change. The installed gem is a copy, not a link to your checkout.
+- To remove it: `gem uninstall oops-cli`.
+- Put `eval "$(oops init zsh)"` in your rc file, not just at the prompt: the recorded shell reads the rc file again, and without the line it has no hooks (`oops doctor` shows `hooks: missing`).
+
+Never run `oops record` in the terminal you are working in; the tests drive it through their own pty. Try it in a new terminal tab instead. To delete the logs your experiments leave behind, see "Privacy and security".
+
+The tests cover formatting, secret masking, the log reader, the stream parser and an end-to-end run of the relay with real zsh and bash.
 
 Manual checklist before a release:
 

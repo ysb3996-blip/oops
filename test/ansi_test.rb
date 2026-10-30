@@ -32,6 +32,21 @@ class AnsiTest < Minitest::Test
     assert_equal "x", Oops::Ansi.strip("\e[H\e[2J\e[3Jx")
   end
 
+  def test_single_char_escapes_leave_no_stray_characters
+    # ESC 7 / ESC 8 save and restore the cursor, ESC = / ESC > switch the keypad.
+    assert_equal "abcd", Oops::Ansi.strip("a\e7b\e8c\e=d\e>")
+  end
+
+  def test_cursor_forward_becomes_spaces
+    assert_equal "Accessing workspace:", Oops::Ansi.strip("Accessing\e[1Cworkspace:")
+    assert_equal "a   b", Oops::Ansi.strip("a\e[3Cb")
+    assert_equal "a b", Oops::Ansi.strip("a\e[Cb")
+  end
+
+  def test_cursor_forward_is_capped
+    assert_equal "a#{' ' * 200}b", Oops::Ansi.strip("a\e[99999Cb")
+  end
+
   def test_crlf_is_single_newline
     assert_equal "a\nb\n", Oops::Ansi.strip("a\r\nb\r\n")
   end
