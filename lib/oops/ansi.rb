@@ -9,17 +9,23 @@ module Oops
         "\\e\\][^\\a\\e]*(?:\\a|\\e\\\\|\\z)",  # OSC
         "\\e[P_^X][^\\e]*(?:\\e\\\\)?",         # DCS, APC, PM, SOS (unterminated: up to the next ESC)
         "\\e[ -/]+[0-~]",                       # nF sequences
-        "\\e[@-~]?",                            # 2-char ESC sequences
+        "\\e[0-~]?",                            # 2-char ESC sequences, e.g. ESC 7, ESC 8, ESC =, ESC M
         "\\a"                                   # BEL
       ].join("|"),
       Regexp::MULTILINE | Regexp::NOENCODING
     )
 
+    # "Move the cursor right N columns": full-screen UIs use it instead of
+    # printing spaces, so dropping it would glue words together.
+    CURSOR_FORWARD = /\e\[(\d*)C/n
+    MAX_FORWARD = 200
+
     module_function
 
     def strip(bytes)
       encoding = bytes.encoding
-      text = bytes.b.gsub(ESCAPES, "".b).gsub("\r\n".b, "\n".b)
+      text = bytes.b.gsub(CURSOR_FORWARD) { " ".b * Regexp.last_match(1).to_i.clamp(1, MAX_FORWARD) }
+      text = text.gsub(ESCAPES, "".b).gsub("\r\n".b, "\n".b)
       lines = text.split("\n".b, -1).map { |line| apply_line_controls(line, encoding) }
       lines.join("\n".b).force_encoding(encoding)
     end

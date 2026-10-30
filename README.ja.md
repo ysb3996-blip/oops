@@ -171,16 +171,54 @@ clipboard: auto     # auto | pbcopy | wl-copy | xclip | xsel | clip.exe | osc52 
 
 ## 開発
 
+### 手元の環境を整える
+
+Git、Ruby 3.3 以降、[Bundler](https://bundler.io/)（Ruby に付属）、そして zsh と bash の両方が必要です（エンドツーエンドのテストが本物のシェルを起動するため）。macOS には zsh と bash が入っています。Debian / Ubuntu では `sudo apt-get install zsh` を実行します。
+
 ```sh
-bundle install
-bundle exec rake test
-bundle exec rubocop
-gem build oops-cli.gemspec
+git clone https://github.com/ysb3996-blip/oops.git
+cd oops
 ```
 
-作業中の端末で `oops record` を実行しないでください。テストは自前の pty を通して動かします。
+リポジトリは `.ruby-version` で Ruby 4.0.9 を指定しています。rbenv・asdf・mise などのバージョン管理ツールを使っている場合は、そのバージョンを入れてください（`rbenv install 4.0.9`、続けて `rbenv rehash`）。この指定を消すか無視すれば、3.3 以降の任意の Ruby でも動きます。`ruby -v` で確認します。
 
-テストは、書式、秘密情報のマスク、ログの読み取り、ストリームパーサー、そして実際の zsh と bash を使った中継のエンドツーエンド実行を対象にしています。CI は Ubuntu と macOS で Ruby 3.3、3.4、4.0 を使って実行します。
+```sh
+bundle install
+bundle exec rake test       # テスト全体（約 30 秒）
+bundle exec rubocop         # スタイルのチェック
+```
+
+CI は Ubuntu と macOS で、Ruby 3.3・3.4・4.0 を使ってこの 2 つを実行し、gem のビルドも行います。プルリクエストを出す前に、3 つとも実行してください。
+
+```sh
+bundle exec rake test && bundle exec rubocop && gem build oops-cli.gemspec
+```
+
+### 変更を試す
+
+テストファイル 1 つだけなら `bundle exec ruby -Itest -Ilib test/ansi_test.rb` で実行できます。何もインストールせず、チェックアウトしたものからコマンドを直接動かすには:
+
+```sh
+bundle exec exe/oops --version
+bundle exec exe/oops doctor
+```
+
+シェルから使うのと同じ形で試すには、使っている Ruby に gem をビルドしてインストールし、「シェルの設定」の 1 行を**新しい**タブで有効にします。
+
+```sh
+gem build oops-cli.gemspec
+gem install ./oops-cli-0.1.0.gem     # ファイル名は lib/oops/version.rb に合わせる
+rbenv rehash                         # rbenv を使う場合のみ
+```
+
+- gem は Ruby のバージョンごとに入ります。新しいタブが、インストールした Ruby とは別の Ruby を使っていると（たとえばリポジトリは 4.0.9 を指定しているのに、標準の Ruby が 3.3.5 の場合）、シェルに `oops: command not found` と出ます。その Ruby でも `gem install` を実行してください（例: `RBENV_VERSION=3.3.5 gem install ./oops-cli-0.1.0.gem`）。
+- 変更のたびに入れ直してください。インストールされた gem はコピーで、チェックアウトへのリンクではありません。
+- 削除するには `gem uninstall oops-cli` です。
+- `eval "$(oops init zsh)"` は、プロンプトで打つだけでなく rc ファイルに書いてください。記録されるシェルは rc ファイルを読み直すため、行がないとフックが入りません（`oops doctor` に `hooks: missing` と出ます）。
+
+作業中の端末で `oops record` を実行しないでください。テストは自前の pty を通して動かします。試すときは、新しい端末タブを使います。試した結果として残るログを消すには、「プライバシーとセキュリティ」を参照してください。
+
+テストは、書式、秘密情報のマスク、ログの読み取り、ストリームパーサー、そして実際の zsh と bash を使った中継のエンドツーエンド実行を対象にしています。
 
 リリース前の手動チェックリスト:
 
