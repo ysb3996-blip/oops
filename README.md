@@ -143,6 +143,10 @@ Built-in masking covers AWS access keys, GitHub and Slack tokens, JWTs, `Authori
 4. For each finished command the relay appends one JSON line (command, directory, times, exit code, raw output) to a per-tab log under `${XDG_STATE_HOME:-~/.local/state}/oops/sessions/`. Output is capped at 1 MB per command (the tail is kept). Each tab's log is capped at 50 MB: when it passes that, it is rewritten to keep only its newest commands (up to about 37 MB). When a tab starts recording, logs of closed tabs are deleted, oldest first, until all logs together take at most 50 MB; logs of open tabs are never deleted, so several busy tabs can together use more.
 5. `oops` reads the end of the current tab's log, cleans and masks the text, builds the code block and hands it to the clipboard. Nothing is ever re-run.
 
+## Privacy and security
+
+- Recorded output is untrusted: any program you run can print text that looks like oops's markers. oops therefore obeys a pause or resume marker only when it agrees with the flag file that `oops pause` and `oops resume` set, so output cannot silently pause recording. A program can still fake where a command starts and ends in the log, so check what you paste.
+
 ## Known limitations
 
 - Each recorded tab keeps one Ruby process alive (about 17 MB).

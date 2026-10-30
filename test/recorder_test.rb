@@ -53,6 +53,22 @@ class RecorderTest < Minitest::Test
     assert_equal ["stream parser failed: RuntimeError: bug"], errors
   end
 
+  def test_filter_honours_pause_only_when_the_pause_flag_exists
+    Dir.mktmpdir do |dir|
+      log = Oops::SessionLog.new(File.join(dir, "s.jsonl"))
+      filter = Oops::Recorder::OutputFilter.new(log: log, on_error: ->(m) { flunk m })
+      filter.feed("#{Oops::Marker.pause}#{marked(1, 'spoofed', "a\n", 0)}")
+      assert_equal [1], log.last(5).map(&:seq), "a pause marker in program output is ignored"
+      log.pause!
+      filter.feed("#{Oops::Marker.pause}#{marked(2, 'secret', "b\n", 0)}")
+      filter.feed(Oops::Marker.resume)
+      filter.feed(marked(3, "still paused", "c\n", 0))
+      log.resume!
+      filter.feed("#{Oops::Marker.resume}#{marked(4, 'back', "d\n", 0)}")
+      assert_equal [1, 4], log.last(5).map(&:seq)
+    end
+  end
+
   def test_finish_returns_held_bytes
     filter = Oops::Recorder::OutputFilter.new(log: nil, on_error: ->(m) { flunk m })
     assert_equal "x", filter.feed("x\e_oo")

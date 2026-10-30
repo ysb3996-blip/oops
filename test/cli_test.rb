@@ -246,6 +246,19 @@ class CLICopyTest < Minitest::Test
     refute_predicate @log, :paused?
   end
 
+  def test_pause_flag_exists_before_the_marker_is_written
+    seen = []
+    flag = "#{@session}.paused"
+    out = StringIO.new
+    out.define_singleton_method(:write) do |*args|
+      seen << File.exist?(flag)
+      super(*args)
+    end
+    Oops::CLI.run(["pause"], env: @env, stdout: out, stderr: StringIO.new)
+    Oops::CLI.run(["resume"], env: @env, stdout: out, stderr: StringIO.new)
+    assert_equal [true, false], seen
+  end
+
   def test_pause_and_resume_require_recording
     env = @env.merge("OOPS_SESSION" => nil)
     assert_equal [1, "", NOT_RECORDING_ZSH], run_cli("pause", env: env)

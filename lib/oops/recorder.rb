@@ -26,11 +26,16 @@ module Oops
     # Feeds child output through the StreamParser and appends records to the
     # log. Failures never lose output: a failing log is dropped, and if the
     # parser itself fails, bytes are forwarded unparsed from then on.
+    #
+    # A pause marker counts only while the log's pause flag file exists (and
+    # a resume marker only while it does not): `oops pause` creates the file
+    # before it prints the marker, while program output that merely contains
+    # the marker cannot.
     class OutputFilter
       def initialize(log:, on_error:, max_bytes: 1_048_576)
         @log = log
         @on_error = on_error
-        @parser = StreamParser.new(max_bytes: max_bytes) { |record| store(record) }
+        @parser = StreamParser.new(max_bytes: max_bytes, pause_gate: pause_gate(log)) { |record| store(record) }
         @broken = false
       end
 
@@ -55,6 +60,19 @@ module Oops
       end
 
       private
+
+      def pause_gate(log)
+        return nil unless log
+
+        lambda do |kind|
+          paused = begin
+            log.paused?
+          rescue SystemCallError
+            false
+          end
+          kind == :pause ? paused : !paused
+        end
+      end
 
       def store(record)
         return unless @log

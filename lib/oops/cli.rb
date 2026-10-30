@@ -109,14 +109,16 @@ module Oops
     end
 
     # `oops pause` / `oops resume`: the marker goes through the pty to the
-    # recorder; the flag file tells `oops` (and `doctor`) the state.
+    # recorder; the flag file tells `oops` (and `doctor`) the state. The
+    # recorder only obeys a marker that agrees with the flag file, so the
+    # file changes first.
     def self.toggle(name, args, env:, stdout:)
       raise UsageError, "usage: oops #{name}" unless args.empty?
 
       log = recording_log(env)
       if name == "pause"
-        stdout.write Marker.pause
         log.pause!
+        stdout.write Marker.pause
       else
         log.resume!
         stdout.write Marker.resume

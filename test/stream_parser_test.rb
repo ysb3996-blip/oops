@@ -181,6 +181,22 @@ class StreamParserTest < Minitest::Test
     assert_empty @records
   end
 
+  def test_pause_and_resume_markers_need_the_gate
+    allowed = { pause: false, resume: false }
+    p = Oops::StreamParser.new(max_bytes: 100, pause_gate: ->(kind) { allowed.fetch(kind) }) { |r| @records << r }
+    assert_equal "a", p.feed("#{Oops::Marker.pause}#{start(1)}a#{fin(1)}")
+    refute_predicate p, :paused?
+    assert_equal ["a"], @records.map(&:output)
+    allowed[:pause] = true
+    p.feed(Oops::Marker.pause)
+    assert_predicate p, :paused?
+    p.feed(Oops::Marker.resume)
+    assert_predicate p, :paused?, "a resume the gate refuses is ignored"
+    allowed[:resume] = true
+    p.feed(Oops::Marker.resume)
+    refute_predicate p, :paused?
+  end
+
   def test_finish_returns_held_bytes
     @p.feed("#{start(1)}out\e_oo")
     held = @p.finish

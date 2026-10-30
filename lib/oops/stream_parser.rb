@@ -26,6 +26,10 @@ module Oops
   #
   # While paused nothing is stored and start/end markers are ignored (they are
   # still removed from the forwarded bytes).
+  #
+  # Any program can print a marker, so the optional pause_gate decides whether
+  # a pause or resume marker is genuine: it is called with :pause or :resume
+  # and the marker is ignored when it returns false.
   class StreamParser
     OMITTED = "[full-screen app output omitted]\n".b.freeze
     MAX_HELD_MARKER = 65_536
@@ -112,8 +116,9 @@ module Oops
       end
     end
 
-    def initialize(max_bytes: 1_048_576, &on_record)
+    def initialize(max_bytes: 1_048_576, pause_gate: nil, &on_record)
       @max_bytes = max_bytes
+      @pause_gate = pause_gate
       @on_record = on_record
       @state = :text
       @hold = +"".b
@@ -261,15 +266,21 @@ module Oops
 
       case marker[:kind]
       when :pause
+        return unless gate_open?(:pause)
+
         @command = nil
         @paused = true
       when :resume
-        @paused = false
+        @paused = false if gate_open?(:resume)
       when :start
         open_command(marker) unless @paused
       when :end
         close_command(marker[:exit]) if !@paused && @command && @command.seq == marker[:seq]
       end
+    end
+
+    def gate_open?(kind)
+      @pause_gate.nil? || @pause_gate.call(kind)
     end
 
     def open_command(marker)
