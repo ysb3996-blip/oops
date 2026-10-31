@@ -11,6 +11,9 @@ module Oops
 
     NO_CLIPBOARD = "no clipboard tool found (tried pbcopy, wl-copy, xclip, xsel, clip.exe, OSC 52).".freeze
     POSITIVE_INTEGER = /\A\d+\z/
+    CopyTarget = Data.define(:count, :failed_only)
+    COUNT_REPEATED = "specify the command count only once (N or -n)".freeze
+    private_constant :CopyTarget, :COUNT_REPEATED
 
     def self.run(argv, env: ENV, stdin: $stdin, stdout: $stdout, stderr: $stderr)
       case argv.first
@@ -21,8 +24,14 @@ module Oops
       end
 
       options = { head: nil, tail: nil, github: false, show_secrets: false }
+      count = nil
       parser = OptionParser.new do |o|
         o.banner = "Usage: oops [N | err] [options]\n       oops init <shell> | pause | resume | doctor"
+        o.on("-n N", "Copy the last N commands (with err, last N failures)") do |v|
+          raise UsageError, COUNT_REPEATED if count
+
+          count = positive(v, "-n")
+        end
         o.on("--github", "Format for a GitHub issue or PR comment") { options[:github] = true }
         o.on("--tail N", "Keep only the last N output lines") { |v| options[:tail] = positive(v, "--tail") }
         o.on("--head N", "Keep only the first N output lines") { |v| options[:head] = positive(v, "--head") }
@@ -36,7 +45,7 @@ module Oops
           return 0
         end
       end
-      copy(target(parser.parse(argv)), options, env: env, stdout: stdout, stderr: stderr)
+      copy(target(parser.parse(argv), count: count), options, env: env, stdout: stdout, stderr: stderr)
     rescue OptionParser::ParseError, UsageError => e
       stderr.puts "oops: #{e.message}"
       2
@@ -51,17 +60,18 @@ module Oops
       value.to_i
     end
 
-    # Positional arguments: none (the last command), N (the last N commands)
-    # or "err" (the last failed command). Returns 1, N or :err.
-    def self.target(args)
+    # Count comes from either a positional N or -n N. "err" filters the
+    # selection to failed commands; without a count, one command is copied.
+    def self.target(args, count:)
       raise UsageError, "unexpected argument: #{args[1]}" if args.size > 1
 
       arg = args.first
-      return 1 if arg.nil?
-      return :err if arg == "err"
-      return positive(arg, "N") if arg.match?(/\A[+-]?\d/)
+      return CopyTarget.new(count: count || 1, failed_only: arg == "err") if arg.nil? || arg == "err"
 
-      raise UsageError, "unknown command: #{arg}"
+      raise UsageError, "unknown command: #{arg}" unless arg.match?(/\A[+-]?\d/)
+      raise UsageError, COUNT_REPEATED if count
+
+      CopyTarget.new(count: positive(arg, "N"), failed_only: false)
     end
 
     def self.copy(target, options, env:, stdout:, stderr:)
@@ -70,8 +80,8 @@ module Oops
 
       config = Config.load(env: env)
       config.warnings.each { |w| stderr.puts "oops: warning: #{w}" }
-      records = target == :err ? [log.last_failed].compact : log.last(target)
-      raise Failure, (target == :err ? "no failed command found." : "no command found yet.") if records.empty?
+      records = log.last(target.count, failed_only: target.failed_only)
+      raise Failure, (target.failed_only ? "no failed command found." : "no command found yet.") if records.empty?
 
       home = env["HOME"].to_s.empty? ? Dir.home : env["HOME"]
       result = Formatter.new(config: config, home: home, **options).format(records)

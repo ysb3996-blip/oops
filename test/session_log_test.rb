@@ -98,6 +98,37 @@ class SessionLogTest < Minitest::Test
     with_log { |log| assert_equal [], log.last(3) }
   end
 
+  def test_last_failed_only_limits_failures_and_returns_oldest_first
+    with_log do |log|
+      log.append(rec(1, exit: 1))
+      log.append(rec(2, exit: 2))
+      log.append(rec(3))
+      log.append(rec(4, exit: 3))
+      log.append(rec(5, exit: nil))
+      log.append(rec(6, cmd: "oops err -n 2", exit: 1))
+      log.append(rec(7, exit: "1"))
+      assert_equal [2, 4], log.last(2, failed_only: true).map(&:seq)
+      assert_equal [1, 2, 4], log.last(10, failed_only: true).map(&:seq)
+    end
+  end
+
+  def test_last_failed_only_on_missing_file_or_without_failures_is_empty
+    with_log do |log|
+      assert_empty log.last(2, failed_only: true)
+      log.append(rec(1))
+      assert_empty log.last(2, failed_only: true)
+    end
+  end
+
+  def test_last_failed_only_stops_reading_when_count_is_reached
+    Dir.mktmpdir do |dir|
+      log = CountingLog.new("#{dir}/s.jsonl")
+      200.times { |i| log.append(rec(i, out: "x" * 1000, exit: i.even? ? 1 : 0)) }
+      assert_equal [196, 198], log.last(2, failed_only: true).map(&:seq)
+      assert_operator log.bytes_read, :<=, Oops::SessionLog::CHUNK_SIZE + 1
+    end
+  end
+
   def test_last_failed_skips_successes
     with_log do |log|
       log.append(rec(1, exit: 1))

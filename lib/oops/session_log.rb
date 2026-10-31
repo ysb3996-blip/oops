@@ -93,11 +93,13 @@ module Oops
       nil
     end
 
-    # Newest count finished, non-oops records, oldest first.
-    def last(count, skip_oops: true)
+    # Newest count finished, non-oops records, oldest first. With failed_only,
+    # only records with a non-zero integer exit status count toward the limit.
+    def last(count, skip_oops: true, failed_only: false)
       found = []
       each_backward do |r|
         next if r.exit.nil? || (skip_oops && r.oops_self?)
+        next if failed_only && (!r.exit.is_a?(Integer) || r.exit.zero?)
 
         found << r
         :stop if found.size >= count
@@ -106,10 +108,7 @@ module Oops
     end
 
     def last_failed
-      each_backward do |r|
-        return r if r.exit.is_a?(Integer) && r.exit != 0 && !r.oops_self?
-      end
-      nil
+      last(1, failed_only: true).first
     end
 
     def paused?
