@@ -13,6 +13,8 @@ You ran a command and it failed. You want to show it to a chat assistant, a team
 
 What lands on your clipboard is a code block with the command, its output, and the exit code. Colors are stripped, and tokens, keys and email addresses are masked.
 
+![How oops works: a recorder sits between you and your shell, every command is written to a notebook on your disk, typing oops copies the last page with secrets hidden, and you paste it anywhere](docs/how-it-works.svg)
+
 ## Install
 
 ```sh
