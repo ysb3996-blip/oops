@@ -4,7 +4,9 @@ module Oops
   # Per field (command line and output) the pipeline is: strip ANSI, scrub
   # invalid UTF-8, shorten the home directory to "~", mask secrets, apply the
   # config replace table. Output is then truncated (head/tail) and fenced.
-  # With show_secrets, the home/mask/replace steps are skipped.
+  # With show_secrets, the home/mask/replace steps are skipped. With time, a
+  # "# <local start time>" line precedes each command; with output_only, the
+  # "$ command" line is left out.
   class Formatter
     GITHUB_COLLAPSE_LINES = 30
 
@@ -13,13 +15,18 @@ module Oops
     # command_line: the formatted first command, without "$ " or indentation.
     Result = Struct.new(:text, :lines, :masked_count, :command_line)
 
-    def initialize(config:, home: Dir.home, show_secrets: false, head: nil, tail: nil, github: false)
+    TIME_FORMAT = "%Y-%m-%d %H:%M:%S %:z".freeze
+
+    def initialize(config:, home: Dir.home, show_secrets: false, head: nil, tail: nil, github: false,
+                   time: false, output_only: false)
       @config = config
       @home = home.to_s
       @show_secrets = show_secrets
       @head = head
       @tail = tail
       @github = github
+      @time = time
+      @output_only = output_only
       @masked = 0
     end
 
@@ -37,9 +44,21 @@ module Oops
       shown, count = shown_lines(clean(PromptSp.strip(record.output.to_s)))
       exit_code = record.exit
       exit_code = nil if exit_code.to_i.zero?
-      body = ["$ #{command.gsub("\n", "\n  ").gsub(/^ +$/, '')}", *shown]
+      stamp = start_time(record)
+      body = []
+      body << "# #{stamp}" if stamp
+      body << "$ #{command.gsub("\n", "\n  ").gsub(/^ +$/, '')}" unless @output_only
+      body.concat(shown)
       body << "(exit #{exit_code})" if exit_code
-      { command: command, exit: exit_code, count: count, content: body.join("\n") }
+      { command: command, exit: exit_code, count: count, time: stamp, content: body.join("\n") }
+    end
+
+    # Local time the command started, or nil without --time or for a record
+    # that has no start time.
+    def start_time(record)
+      return nil unless @time && record.started_at
+
+      Time.at(record.started_at.to_i).strftime(TIME_FORMAT)
     end
 
     # Returns [lines to show, real output line count]: trailing blank lines
@@ -98,13 +117,20 @@ module Oops
       parts = []
       parts << "exit #{block[:exit]}" if block[:exit]
       parts << "#{block[:count]} lines"
-      summary = escape_html("$ #{block[:command]}".gsub("\n", " "))
-      "<details>\n<summary><code>#{summary}</code> — #{parts.join(', ')}</summary>\n\n#{fence}\n</details>\n"
+      parts << block[:time] if block[:time]
+      summary = parts.join(", ")
+      unless @output_only
+        command = escape_html("$ #{block[:command]}".gsub("\n", " "))
+        summary = "<code>#{command}</code> — #{summary}"
+      end
+      "<details>\n<summary>#{summary}</summary>\n\n#{fence}\n</details>\n"
     end
 
     def fenced(content, language)
       longest = content.scan(/`+/).map(&:length).max.to_i
       fence = "`" * [3, longest + 1].max
+      return "#{fence}#{language}\n#{fence}\n" if content.empty?
+
       "#{fence}#{language}\n#{content}\n#{fence}\n"
     end
 

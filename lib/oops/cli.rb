@@ -21,12 +21,14 @@ module Oops
       when "init" then return init(argv.drop(1), stdout: stdout, stderr: stderr)
       when "doctor" then return doctor(argv.drop(1), env: env, stdin: stdin, stdout: stdout)
       when "pause", "resume" then return toggle(argv.first, argv.drop(1), env: env, stdout: stdout)
+      when "status" then return status(argv.drop(1), env: env, stdout: stdout, stderr: stderr)
       end
 
-      options = { head: nil, tail: nil, github: false, show_secrets: false }
+      options = { head: nil, tail: nil, github: false, show_secrets: false, time: false, output_only: false }
       count = nil
       parser = OptionParser.new do |o|
-        o.banner = "Usage: oops [N | err] [-n N] [options]\n       oops init <shell> | pause | resume | doctor"
+        o.banner = "Usage: oops [N | err] [-n N] [options]\n       " \
+                   "oops init <shell> | pause | resume | status | doctor"
         o.on("-n N", "Copy the last N commands (with err, last N failures)") do |v|
           raise UsageError, COUNT_REPEATED if count
 
@@ -35,6 +37,8 @@ module Oops
         o.on("--github", "Format for a GitHub issue or PR comment") { options[:github] = true }
         o.on("--tail N", "Keep only the last N output lines") { |v| options[:tail] = positive(v, "--tail") }
         o.on("--head N", "Keep only the first N output lines") { |v| options[:head] = positive(v, "--head") }
+        o.on("--time", "Add the time each command started") { options[:time] = true }
+        o.on("--output-only", "Leave out the command line, keep the output") { options[:output_only] = true }
         o.on("--show-secrets", "Do not mask secrets or apply the replace table") { options[:show_secrets] = true }
         o.on("-v", "--version", "Print version and exit") do
           stdout.puts "oops #{VERSION}"
@@ -154,6 +158,24 @@ module Oops
       stdout.flush
     end
 
+    # `oops status`: one word on stdout. "recording" exits 0; "paused" and
+    # "off" (this shell is not recorded, or its log is gone) exit 1 without a
+    # message, so a prompt can call it.
+    def self.status(args, env:, stdout:, stderr:)
+      unless args.empty?
+        stderr.puts "oops: usage: oops status"
+        return 2
+      end
+
+      path = env["OOPS_SESSION"].to_s
+      word = if path.empty? || !File.file?(path) then "off"
+             elsif SessionLog.new(path).paused? then "paused"
+             else "recording"
+             end
+      stdout.puts word
+      word == "recording" ? 0 : 1
+    end
+
     # `oops doctor`: diagnostics on stdout; always exits 0.
     def self.doctor(args, env:, stdin:, stdout:)
       raise UsageError, "usage: oops doctor" unless args.empty?
@@ -191,6 +213,6 @@ module Oops
     end
 
     private_class_method :positive, :target, :copy, :report_command, :report_counts, :recording_log, :toggle,
-                         :write_marker, :doctor
+                         :write_marker, :status, :doctor
   end
 end

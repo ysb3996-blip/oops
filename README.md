@@ -58,6 +58,7 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | `oops init zsh` / `oops init bash` | Print the shell snippet (for `eval`) |
 | `oops doctor` | Diagnose recording, hooks, clipboard, config and log size |
 | `oops pause` / `oops resume` | Stop and restart recording. While paused, nothing is written to disk |
+| `oops status` | Print `recording`, `paused` or `off` on one line, for scripts and prompts |
 | `oops record -- <shell>` | Internal: runs a shell under the recorder. The snippet calls this |
 | `oops --version`, `oops --help` | Version and usage |
 
@@ -69,6 +70,8 @@ Options for `oops`, `oops N` and `oops err`:
 | `--github` | Format for a GitHub issue or PR comment |
 | `--tail N` | Keep only the last N output lines |
 | `--head N` | Keep only the first N output lines (with `--tail`, keeps both ends) |
+| `--time` | Add the time each command started as a `# 2026-10-31 19:30:09 +09:00` line |
+| `--output-only` | Leave out the `$ command` line and copy only the output |
 | `--show-secrets` | Do not mask secrets and do not apply the replace table |
 
 `N` must be a positive integer. Specify the command count once, either as a positional `N` or with `-n N`; combining them or repeating `-n` is a usage error. If fewer matching commands are available, oops copies those it finds. `-n` can be combined with the formatting options above.
@@ -125,6 +128,22 @@ $ bundle exec rspec
 ### `--tail` and `--head`
 
 `oops --tail 50` keeps the last 50 lines of output and puts `... 2,950 lines omitted ...` before them. `--head 20` keeps the first 20 and puts the marker after. With both, the middle is replaced by one marker line. With `oops 3`, the limits apply to each command.
+
+### `--time` and `--output-only`
+
+`oops --time` puts the local time the command started on a `#` line before each `$ command`, and adds it to the `--github` summary. `oops --output-only` leaves out the `$ command` line and keeps the output and `(exit N)`; the `copied: $ ...` line on screen and the `--github` summary then show the exit code and line count without the command. Both can be combined with the other options:
+
+````
+```
+# 2026-10-31 19:30:09 +09:00
+....F
+(exit 1)
+```
+````
+
+### `oops status`
+
+`oops status` prints `recording`, `paused` or `off` (this shell is not recorded, or its log was deleted) and exits `0` only when recording. It prints no error, so a prompt or script can call it, for example with a [starship custom module](https://starship.rs/config/#custom-commands). Each call starts Ruby, which takes roughly 0.1 to 0.2 seconds; `oops doctor` tells more when the answer is `off`.
 
 ## Configuration
 

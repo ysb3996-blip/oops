@@ -73,6 +73,56 @@ class FormatterTest < Minitest::Test
     assert_equal "```console\n$ ls\na\n(exit 1)\n```\n", t
   end
 
+  def test_time_adds_a_comment_line_before_each_command
+    at = 1_761_912_185
+    stamp = Time.at(at).strftime("%Y-%m-%d %H:%M:%S %:z")
+    epoch = Time.at(0).strftime("%Y-%m-%d %H:%M:%S %:z")
+    r = rec(cmd: "ls", out: "a\n")
+    r.started_at = at
+    t = fmt(time: true).format([r, rec(cmd: "b", out: "2\n", exit: 2)]).text
+    assert_equal "```\n# #{stamp}\n$ ls\na\n\n# #{epoch}\n$ b\n2\n(exit 2)\n```\n", t
+  end
+
+  def test_time_is_skipped_when_the_record_has_no_start_time
+    r = rec(cmd: "ls", out: "a\n")
+    r.started_at = nil
+    assert_equal "```\n$ ls\na\n```\n", fmt(time: true).format([r]).text
+  end
+
+  def test_time_appears_in_github_summary
+    out = "#{(1..31).map { 'l' }.join("\n")}\n"
+    r = rec(cmd: "ls", out: out, exit: 1)
+    r.started_at = 1_761_912_185
+    stamp = Time.at(1_761_912_185).strftime("%Y-%m-%d %H:%M:%S %:z")
+    t = fmt(github: true, time: true).format([r]).text
+    assert t.start_with?("<details>\n<summary><code>$ ls</code> — exit 1, 31 lines, #{stamp}</summary>\n\n")
+    assert_includes t, "```console\n# #{stamp}\n$ ls\n"
+  end
+
+  def test_output_only_drops_the_command_line_but_keeps_exit
+    r = fmt(output_only: true).format([rec(cmd: "bundle exec rspec", out: "....F\n", exit: 1)])
+    assert_equal "```\n....F\n(exit 1)\n```\n", r.text
+    assert_equal "bundle exec rspec", r.command_line
+  end
+
+  def test_output_only_with_empty_output_is_an_empty_fence
+    assert_equal "```\n```\n", fmt(output_only: true).format([rec(cmd: "cd foo", out: "")]).text
+  end
+
+  def test_output_only_keeps_the_time_line
+    r = rec(cmd: "ls", out: "a\n")
+    r.started_at = 1_761_912_185
+    stamp = Time.at(1_761_912_185).strftime("%Y-%m-%d %H:%M:%S %:z")
+    assert_equal "```\n# #{stamp}\na\n```\n", fmt(output_only: true, time: true).format([r]).text
+  end
+
+  def test_output_only_github_summary_has_no_command
+    out = "#{(1..31).map { 'l' }.join("\n")}\n"
+    t = fmt(github: true, output_only: true).format([rec(cmd: "ls", out: out, exit: 1)]).text
+    assert t.start_with?("<details>\n<summary>exit 1, 31 lines</summary>\n\n```console\nl\n")
+    refute_includes t, "$ ls"
+  end
+
   def test_github_long_is_collapsed
     out = "#{(1..31).map { 'l' }.join("\n")}\n"
     t = fmt(github: true).format([rec(cmd: "ls", out: out, exit: 1)]).text
