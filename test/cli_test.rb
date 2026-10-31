@@ -15,6 +15,13 @@ class CLITest < Minitest::Test
     assert_match(/oops: /, err.string)
   end
 
+  def test_help_describes_command_count_option
+    out = StringIO.new
+    assert_equal 0, Oops::CLI.run(["--help"], stdout: out, stderr: StringIO.new)
+    assert_equal "Usage: oops [N | err] [-n N] [options]\n", out.string.lines.first
+    assert_includes out.string, "-n N"
+  end
+
   def test_init_prints_snippet_with_absolute_bin
     out = StringIO.new
     status = Oops::CLI.run(%w[init zsh], stdout: out, stderr: StringIO.new)
@@ -142,6 +149,98 @@ class CLICopyTest < Minitest::Test
   def test_n_larger_than_history_copies_what_there_is
     add("only", "x\r\n")
     assert_equal [0, "copied: $ only (1 lines)\n", ""], run_cli("5")
+  end
+
+  def test_short_count_option_matches_positional_count
+    add("c1", "one\r\n")
+    add("c2", "two\r\n")
+    add("c3", "three\r\n")
+    expected = run_cli("2")
+    expected_clip = clip
+    [%w[-n 2], %w[-n2], %w[-n 02]].each do |args|
+      assert_equal expected, run_cli(*args), args.inspect
+      assert_equal expected_clip, clip
+    end
+  end
+
+  def test_short_count_option_skips_oops_and_unfinished_records
+    add("c1", "one\r\n")
+    add("oops -n 2", "copied\r\n")
+    add("unfinished", "", exit: nil)
+    add("c2", "two\r\n")
+    assert_equal [0, "copied: $ c1 (2 lines)\n", ""], run_cli("-n", "2")
+    assert_equal "```\n$ c1\none\n\n$ c2\ntwo\n```\n", clip
+  end
+
+  def test_short_count_option_combines_with_formatting_options
+    add("c1", "one\r\ntwo\r\nthree\r\n")
+    add("c2", "four\r\nfive\r\nsix\r\n")
+    expected = run_cli("2", "--github", "--head", "1", "--tail", "1")
+    expected_clip = clip
+    assert_equal 0, expected.first
+    assert_equal expected, run_cli("--github", "-n", "2", "--head", "1", "--tail", "1")
+    assert_equal expected_clip, clip
+  end
+
+  def test_short_count_option_copies_available_history_and_preserves_empty_and_paused_errors
+    assert_equal [1, "", "oops: no command found yet.\n"], run_cli("-n", "5")
+    add("only", "x\r\n")
+    assert_equal [0, "copied: $ only (1 lines)\n", ""], run_cli("-n", "5")
+    @log.pause!
+    assert_equal [1, "", "oops: recording is paused. Run  oops resume  first.\n"], run_cli("-n", "5")
+  end
+
+  def test_short_count_option_rejects_invalid_or_missing_values_without_copying
+    add("c1", "one\r\n")
+    ["0", "-1", "+1", "1.5", "abc", "2x", ""].each do |value|
+      assert_equal [2, "", "oops: -n must be a positive integer\n"], run_cli("-n", value)
+    end
+    status, out, err = run_cli("-n")
+    assert_equal 2, status
+    assert_empty out
+    assert_match(/missing argument: -n/, err)
+    refute File.exist?(@clip)
+  end
+
+  def test_command_count_can_only_be_specified_once
+    add("c1", "one\r\n")
+    [%w[-n 2 -n 3], %w[-n 2 -n 2], %w[2 -n 3], %w[-n 2 3], %w[2 -n 2], %w[err -n 2 -n 3]].each do |args|
+      assert_equal [2, "", "oops: specify the command count only once (N or -n)\n"], run_cli(*args), args.inspect
+    end
+    refute File.exist?(@clip)
+  end
+
+  def test_err_with_count_copies_only_latest_failures_oldest_first
+    add("old failure", "old\r\n", exit: 1)
+    add("first failure", "one\r\n", exit: 2)
+    add("success", "ok\r\n")
+    add("second failure", "two\r\n", exit: 3)
+    add("oops err -n 2", "", exit: 1)
+    add("unfinished", "", exit: nil)
+    [%w[err -n 2], %w[-n 2 err]].each do |args|
+      assert_equal [0, "copied: $ first failure (2 lines)\n", ""], run_cli(*args)
+      assert_equal "```\n$ first failure\none\n(exit 2)\n\n$ second failure\ntwo\n(exit 3)\n```\n", clip
+    end
+    expected = run_cli("err")
+    expected_clip = clip
+    assert_equal expected, run_cli("err", "-n", "1")
+    assert_equal expected_clip, clip
+  end
+
+  def test_err_with_count_copies_available_failures_and_supports_formatting
+    add("bad", "one\r\ntwo\r\nthree\r\n", exit: 2)
+    add("good", "ok\r\n")
+    expected = run_cli("err", "--github", "--head", "1", "--tail", "1")
+    expected_clip = clip
+    assert_equal 0, expected.first
+    assert_equal expected, run_cli("err", "-n", "5", "--github", "--head", "1", "--tail", "1")
+    assert_equal expected_clip, clip
+  end
+
+  def test_err_with_count_preserves_no_failure_error
+    add("good", "ok\r\n")
+    assert_equal [1, "", "oops: no failed command found.\n"], run_cli("err", "-n", "2")
+    refute File.exist?(@clip)
   end
 
   def test_tail_head_and_show_secrets_options

@@ -52,8 +52,9 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | Command | What it does |
 |---|---|
 | `oops` | Copy the last command and its output |
-| `oops 3` | Copy the last 3 commands (oldest first) as one code block |
+| `oops 3` / `oops -n 3` | Copy the last 3 commands (oldest first) as one code block |
 | `oops err` | Copy the last command that exited non-zero, skipping over successful ones |
+| `oops err -n 2` | Copy the last 2 failed commands (oldest first), skipping over successful ones |
 | `oops init zsh` / `oops init bash` | Print the shell snippet (for `eval`) |
 | `oops doctor` | Diagnose recording, hooks, clipboard, config and log size |
 | `oops pause` / `oops resume` | Stop and restart recording. While paused, nothing is written to disk |
@@ -64,10 +65,13 @@ Options for `oops`, `oops N` and `oops err`:
 
 | Option | What it does |
 |---|---|
+| `-n N` | Copy the last N commands (with `err`, the last N failed commands) |
 | `--github` | Format for a GitHub issue or PR comment |
 | `--tail N` | Keep only the last N output lines |
 | `--head N` | Keep only the first N output lines (with `--tail`, keeps both ends) |
 | `--show-secrets` | Do not mask secrets and do not apply the replace table |
+
+`N` must be a positive integer. Specify the command count once, either as a positional `N` or with `-n N`; combining them or repeating `-n` is a usage error. If fewer matching commands are available, oops copies those it finds. `-n` can be combined with the formatting options above.
 
 `oops` never copies itself: if the previous command was `oops`, you get the command before it.
 

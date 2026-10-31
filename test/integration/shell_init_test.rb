@@ -110,6 +110,26 @@ class ShellInitIntegrationTest < Minitest::Test
 
   # --- bash ---
 
+  def test_bash_copies_command_counts_from_the_recorded_shell
+    write_bashrc
+    check_command_counts("bash")
+  end
+
+  def check_command_counts(shell)
+    FileUtils.mkdir_p("#{@home}/cfg/oops")
+    File.write("#{@home}/cfg/oops/config.yml", "clipboard: \"cat > #{@home}/clip\"\n")
+    spawn_shell(shell, "-i")
+    assert_equal 1, run_line("echo first; false")
+    assert_equal 0, run_line("echo second")
+    assert_equal 2, run_line("echo third; (exit 2)")
+    assert_equal 0, run_line("'#{EXE}' -n 2")
+    assert_equal "```\n$ echo second\nsecond\n\n$ echo third; (exit 2)\nthird\n(exit 2)\n```\n",
+                 File.read("#{@home}/clip")
+    assert_equal 0, run_line("'#{EXE}' err -n 2")
+    assert_equal "```\n$ echo first; false\nfirst\n(exit 1)\n\n$ echo third; (exit 2)\nthird\n(exit 2)\n```\n",
+                 File.read("#{@home}/clip")
+  end
+
   def test_bash_rc_snippet_records_commands_with_exit_and_cwd
     write_bashrc
     spawn_shell("bash", "-i")
@@ -319,6 +339,12 @@ class ShellInitIntegrationTest < Minitest::Test
   end
 
   # --- zsh ---
+
+  def test_zsh_copies_command_counts_from_the_recorded_shell
+    skip_without_zsh
+    write_zshrc
+    check_command_counts("zsh")
+  end
 
   def test_zsh_rc_snippet_records_commands_with_exit_and_cwd
     skip_without_zsh
