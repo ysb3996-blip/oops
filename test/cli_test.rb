@@ -18,6 +18,7 @@ class CLITest < Minitest::Test
   def test_help_describes_command_count_option
     out = StringIO.new
     assert_equal 0, Oops::CLI.run(["--help"], stdout: out, stderr: StringIO.new)
+    assert_equal "Usage: oops [N | err] [-n N] [options]\n", out.string.lines.first
     assert_includes out.string, "-n N"
   end
 

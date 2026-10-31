@@ -26,7 +26,7 @@ module Oops
       options = { head: nil, tail: nil, github: false, show_secrets: false }
       count = nil
       parser = OptionParser.new do |o|
-        o.banner = "Usage: oops [N | err] [options]\n       oops init <shell> | pause | resume | doctor"
+        o.banner = "Usage: oops [N | err] [-n N] [options]\n       oops init <shell> | pause | resume | doctor"
         o.on("-n N", "Copy the last N commands (with err, last N failures)") do |v|
           raise UsageError, COUNT_REPEATED if count
 

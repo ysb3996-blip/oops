@@ -122,10 +122,10 @@ class ShellInitIntegrationTest < Minitest::Test
     assert_equal 1, run_line("echo first; false")
     assert_equal 0, run_line("echo second")
     assert_equal 2, run_line("echo third; (exit 2)")
-    assert_equal 0, run_line("#{EXE} -n 2")
+    assert_equal 0, run_line("'#{EXE}' -n 2")
     assert_equal "```\n$ echo second\nsecond\n\n$ echo third; (exit 2)\nthird\n(exit 2)\n```\n",
                  File.read("#{@home}/clip")
-    assert_equal 0, run_line("#{EXE} err -n 2")
+    assert_equal 0, run_line("'#{EXE}' err -n 2")
     assert_equal "```\n$ echo first; false\nfirst\n(exit 1)\n\n$ echo third; (exit 2)\nthird\n(exit 2)\n```\n",
                  File.read("#{@home}/clip")
   end
