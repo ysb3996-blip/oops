@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1020" viewBox="0 0 1400 1020" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
   <title>How oops works</title>
   <desc>Four steps: you type commands as usual while a small recorder sits between you and your shell; every command and its output is written to a notebook on your disk; typing oops copies the last page, hides secrets and wraps it in a code block; you paste it anywhere.</desc>
   <defs>
@@ -7,7 +7,7 @@
     </marker>
   </defs>
 
-  <rect width="1400" height="760" rx="24" fill="#FBF8F3"/>
+  <rect width="1400" height="1020" rx="24" fill="#FBF8F3"/>
 
   <!-- ===== Card 1: you type as usual ===== -->
   <g transform="translate(40 40)">
@@ -151,5 +151,41 @@
 
     <text x="56" y="260" font-size="21" fill="#2B2B2B">Cmd-V. They get the command, the output and</text>
     <text x="56" y="288" font-size="21" fill="#2B2B2B">the exit code, ready to read.</text>
+  </g>
+
+  <!-- ===== Main commands and options ===== -->
+  <g transform="translate(40 760)">
+    <rect width="1320" height="230" rx="20" fill="#fff" stroke="#EDE6DC" stroke-width="2"/>
+    <text x="56" y="52" font-size="24" font-weight="700" fill="#2B2B2B">Handy variants</text>
+      <g transform="translate(56 104)">
+        <rect x="0" y="-22" width="82" height="32" rx="8" fill="#FDECE9"/>
+        <text x="41.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops 3</text>
+        <text x="96" y="0" font-size="19" fill="#2B2B2B">the last 3 commands in one block</text>
+      </g>
+      <g transform="translate(700 104)">
+        <rect x="0" y="-22" width="166" height="32" rx="8" fill="#FDECE9"/>
+        <text x="83.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops --tail 50</text>
+        <text x="180" y="0" font-size="19" fill="#2B2B2B">only the last 50 lines of output</text>
+      </g>
+      <g transform="translate(56 150)">
+        <rect x="0" y="-22" width="104" height="32" rx="8" fill="#FDECE9"/>
+        <text x="52.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops err</text>
+        <text x="118" y="0" font-size="19" fill="#2B2B2B">the last command that failed</text>
+      </g>
+      <g transform="translate(700 150)">
+        <rect x="0" y="-22" width="166" height="32" rx="8" fill="#FDECE9"/>
+        <text x="83.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops --head 20</text>
+        <text x="180" y="0" font-size="19" fill="#2B2B2B">only the first 20 lines of output</text>
+      </g>
+      <g transform="translate(56 196)">
+        <rect x="0" y="-22" width="162" height="32" rx="8" fill="#FDECE9"/>
+        <text x="81.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops --github</text>
+        <text x="176" y="0" font-size="19" fill="#2B2B2B">shaped for a GitHub issue or PR comment</text>
+      </g>
+      <g transform="translate(700 196)">
+        <rect x="0" y="-22" width="218" height="32" rx="8" fill="#FDECE9"/>
+        <text x="109.0" y="0" text-anchor="middle" font-family="Menlo, Consolas, monospace" font-size="16" font-weight="700" fill="#C8432F">oops pause / resume</text>
+        <text x="232" y="0" font-size="19" fill="#2B2B2B">stop and restart recording</text>
+      </g>
   </g>
 </svg>
