@@ -2,6 +2,10 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
+## Unreleased
+
+- `-n N` option for `oops` and `oops err`: `oops -n 3` is the same as `oops 3`, and `oops err -n 2` copies the last 2 failed commands (oldest first), skipping over successful ones. Contributed by [@ricky9408](https://github.com/ricky9408) in [#22](https://github.com/ysb3996-blip/oops/pull/22).
+
 ## 0.1.0 - 2026-10-30
 
 First version.

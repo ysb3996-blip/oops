@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) | 日本語
 
+## 未リリース
+
+- `oops` と `oops err` に `-n N` オプションを追加。`oops -n 3` は `oops 3` と同じで、`oops err -n 2` は直近の失敗した 2 コマンドを（成功したコマンドは飛ばして）古い順にコピーします。[@ricky9408](https://github.com/ricky9408) さんによる貢献（[#22](https://github.com/ysb3996-blip/oops/pull/22)）。
+
 ## 0.1.0 - 2026-10-30
 
 最初のバージョン。
