@@ -22,6 +22,14 @@ class CLITest < Minitest::Test
     assert_includes out.string, "-n N"
   end
 
+  def test_help_lists_status_time_and_output_only
+    out = StringIO.new
+    assert_equal 0, Oops::CLI.run(["--help"], stdout: out, stderr: StringIO.new)
+    assert_includes out.string, "oops init <shell> | pause | resume | status | doctor"
+    assert_includes out.string, "--time"
+    assert_includes out.string, "--output-only"
+  end
+
   def test_init_prints_snippet_with_absolute_bin
     out = StringIO.new
     status = Oops::CLI.run(%w[init zsh], stdout: out, stderr: StringIO.new)
@@ -347,6 +355,33 @@ class CLICopyTest < Minitest::Test
     status, _, err = run_cli("--tail")
     assert_equal 2, status
     assert_match(/\Aoops: missing argument: --tail/, err)
+  end
+
+  def test_time_and_output_only_options
+    add("bundle exec rspec", "....F\n", exit: 1)
+    stamp = Time.at(1).strftime("%Y-%m-%d %H:%M:%S %:z")
+    assert_equal [0, "copied: $ bundle exec rspec (1 lines)\n", ""], run_cli("--time")
+    assert_equal "```\n# #{stamp}\n$ bundle exec rspec\n....F\n(exit 1)\n```\n", clip
+    assert_equal [0, "copied: $ bundle exec rspec (1 lines)\n", ""], run_cli("--output-only")
+    assert_equal "```\n....F\n(exit 1)\n```\n", clip
+  end
+
+  def test_status_reports_recording
+    assert_equal [0, "recording\n", ""], run_cli("status")
+  end
+
+  def test_status_reports_paused_with_exit_one
+    @log.pause!
+    assert_equal [1, "paused\n", ""], run_cli("status")
+  end
+
+  def test_status_reports_off_without_error_when_not_recording
+    assert_equal [1, "off\n", ""], run_cli("status", env: @env.merge("OOPS_SESSION" => ""))
+    assert_equal [1, "off\n", ""], run_cli("status", env: @env.merge("OOPS_SESSION" => "#{@dir}/missing.jsonl"))
+  end
+
+  def test_status_rejects_arguments
+    assert_equal [2, "", "oops: usage: oops status\n"], run_cli("status", "now")
   end
 
   def test_pause_writes_marker_and_flag
