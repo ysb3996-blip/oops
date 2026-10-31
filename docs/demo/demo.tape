@@ -8,7 +8,7 @@ Set FontSize 22
 Set Width 1000
 Set Height 600
 Set Padding 24
-Set TypingSpeed 55ms
+Set TypingSpeed 75ms
 Set Theme { "background": "#2B2B2B", "foreground": "#FFFFFF", "cursor": "#FFFFFF", "green": "#9FE6A0", "red": "#FF8A80", "black": "#2B2B2B", "brightBlack": "#6B6B6B" }
 
 Env HOME "/tmp/oops-demo/home"
@@ -25,17 +25,22 @@ Type "cd ~/app && clear" Enter
 Sleep 1s
 Show
 
-Type "ruby test_user.rb --seed 7" Sleep 400ms Enter
-Sleep 2s
-Type "oops" Sleep 400ms Enter
-Sleep 1.8s
-Type "pbpaste" Sleep 400ms Enter
-Sleep 3.5s
+Type "ruby test_user.rb --seed 7" Sleep 500ms Enter
+Sleep 2.5s
+Type "oops" Sleep 500ms Enter
+Sleep 2.5s
+Type "# what oops put on the clipboard:" Sleep 500ms Enter
+Sleep 800ms
+Type "pbpaste" Sleep 500ms Enter
+Sleep 4.5s
 
 Type "clear" Enter
-Type "cat .env" Sleep 400ms Enter
-Sleep 1.5s
-Type "oops" Sleep 400ms Enter
-Sleep 1.5s
-Type "pbpaste" Sleep 400ms Enter
-Sleep 4s
+Sleep 500ms
+Type "cat .env" Sleep 500ms Enter
+Sleep 2.5s
+Type "oops" Sleep 500ms Enter
+Sleep 2.5s
+Type "# what oops put on the clipboard:" Sleep 500ms Enter
+Sleep 800ms
+Type "pbpaste" Sleep 500ms Enter
+Sleep 4.5s

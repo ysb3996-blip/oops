@@ -6,7 +6,7 @@ English | [日本語](README.ja.md)
 
 Copy the last shell command and its output to the clipboard, ready to paste.
 
-![Demo: a test fails, oops copies the command and its output, pbpaste shows the code block; then cat .env, oops, and the API key is shown as [secret]](docs/demo.gif)
+![Demo: a test fails, oops copies the command and its output, a comment line and pbpaste show what is on the clipboard; then cat .env, oops, and the API key is shown as [secret]](docs/demo.gif)
 
 You ran a command and it failed. You want to show it to a chat assistant, a teammate on Slack, or a GitHub issue. Normally that means dragging to select the output, copying, pasting, and adding the code fences yourself. With oops it is two steps:
 
