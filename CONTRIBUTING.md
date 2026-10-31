@@ -46,6 +46,22 @@ Before you open the pull request:
 - Never run `oops record` in the terminal you are working in. The tests drive it through their own pty.
 - Masking must stay linear in the input size. A new pattern needs a test, and patterns that scan across text need bounded spans (see the guard tests in `test/secrets_test.rb`).
 
+### Comments
+
+The default is no comment. Write one only when it is one of these:
+
+- At the top of a file, one to three sentences on what the class or module does and the rule it must never break (for example, the recorder must never break the user's shell).
+- A *why* that the code cannot show: how the OS or the shell behaves, an invariant the code keeps, a security reason, a trap that was hit before.
+- A method's contract when the name and arguments do not tell it: what it returns in edge cases, what it raises, what it never does.
+- The layout of a format (marker fields, log lines, config keys), next to the code that reads or writes it.
+- For a regular expression or a numeric limit, what it matches and why the limit is where it is.
+- A section marker (`# --- session log ---`) in a class longer than about 200 lines.
+- In a test, the situation or reproduction that the test name alone does not convey.
+
+Do not write: a restatement of the code, commented-out code, `TODO` or `FIXME` (open an issue instead), change history (git and the CHANGELOG hold it), author or tool names, explanations of Ruby syntax or the standard library, or a doc comment on every method.
+
+Comments are in English, in full sentences, wrapped at about 80 columns (RuboCop's 120 is a ceiling, not a target). When you change code, change its comment; a stale comment is a bug and is pointed out in review.
+
 ## Conduct
 
 Be kind and assume good faith. Disagree about code, not about people. Maintainers may close issues and pull requests that are abusive or off topic.
