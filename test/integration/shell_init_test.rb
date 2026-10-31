@@ -61,12 +61,19 @@ class ShellInitIntegrationTest < Minitest::Test
     wait_prompt if prompt
   end
 
-  # Exit status of the spawned shell, waiting at most timeout seconds.
+  # Exit status of the spawned shell, waiting at most timeout seconds. The
+  # shell can be reaped between the reader thread's read and its append to
+  # @out, so the reader is joined first: once the slave side is closed, its
+  # read fails and it ends. If something still holds the pty open, the join
+  # gives up after 2 seconds and whatever was captured is used.
   def shell_exit_status(timeout: 10)
     deadline = Time.now + timeout
     until Time.now > deadline
       _, status = Process.wait2(@pid, Process::WNOHANG)
-      return status.exitstatus if status
+      if status
+        @reader.join(2)
+        return status.exitstatus
+      end
 
       sleep 0.05
     end
