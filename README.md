@@ -6,14 +6,14 @@ English | [日本語](README.ja.md)
 
 Copy the last shell command and its output to the clipboard, ready to paste.
 
+![Demo: a test fails, oops copies the command and its output, a comment line and pbpaste show what is on the clipboard; then cat .env, oops, and the API key is shown as [secret]](docs/demo.gif)
+
 You ran a command and it failed. You want to show it to a chat assistant, a teammate on Slack, or a GitHub issue. Normally that means dragging to select the output, copying, pasting, and adding the code fences yourself. With oops it is two steps:
 
 1. Type `oops` (or `oops err` for the last failed command).
 2. Paste with Cmd-V.
 
 What lands on your clipboard is a code block with the command, its output, and the exit code. Colors are stripped, and tokens, keys and email addresses are masked.
-
-![How oops works: a recorder sits between you and your shell, every command is written to a notebook on your disk, typing oops copies the last page with secrets hidden, and you paste it anywhere](docs/how-it-works.svg)
 
 ## Install
 
@@ -169,6 +169,8 @@ Built-in masking covers AWS access keys, GitHub, GitLab, Slack, npm, OpenAI/Anth
 Masking is pattern based, so it is a safety net, not a guarantee: a secret in a format it does not know (a bare password printed on its own line, for example) is copied as it is. Read what you are about to paste, and add your own patterns under `secrets:` in the config file.
 
 ## How it works
+
+![How oops works: a recorder sits between you and your shell, every command is written to a notebook on your disk, typing oops copies the last page with secrets hidden, and you paste it anywhere](docs/how-it-works.svg)
 
 1. `oops init` prints a snippet that you `eval` from your rc file. In an interactive shell on a terminal that is not recorded yet, it restarts the shell under `oops record`.
 2. `oops record` is a small Ruby pty relay: it passes your keystrokes and the shell's output through untouched and forwards window resizes to the shell.
