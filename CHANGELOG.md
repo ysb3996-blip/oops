@@ -2,7 +2,7 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
-## Unreleased
+## 0.4.1 - 2026-11-04
 
 - Fixed: a closed tab's log is no longer kept forever when its process id is reused by another process. A process that started after the log was last written is not the tab that wrote it ([#58](https://github.com/ysb3996-blip/oops/issues/58)).
 - Changed: a tab that stays open now drops commands older than `retention_days` from its own log when a command finishes, at most once an hour ([#59](https://github.com/ysb3996-blip/oops/issues/59)).
