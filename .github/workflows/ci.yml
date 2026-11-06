@@ -45,7 +45,7 @@ jobs:
         env:
           COVERAGE: ${{ matrix.os == 'ubuntu-latest' && matrix.ruby == '3.3' && '1' || '' }}
       # Pull requests from forks get no OIDC token, so a failed upload must not fail CI.
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         if: matrix.os == 'ubuntu-latest' && matrix.ruby == '3.3'
         with:
           files: coverage/coverage.xml
