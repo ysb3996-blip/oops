@@ -51,6 +51,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "wolf4032",
+      "name": "wolf4032",
+      "avatar_url": "https://avatars.githubusercontent.com/u/144633223?v=4",
+      "profile": "https://github.com/wolf4032",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "commitType": "docs"
