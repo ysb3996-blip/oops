@@ -433,6 +433,7 @@ rbenv rehash                         # rbenv を使う場合のみ
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ricky9408"><img src="https://avatars.githubusercontent.com/u/49530170?v=4?s=80" width="80px;" alt="Sanghyuk Lee"/><br /><sub><b>Sanghyuk Lee</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=ricky9408" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/agenticsymphony-tech"><img src="https://avatars.githubusercontent.com/u/326739730?v=4?s=80" width="80px;" alt="agenticsymphony-tech"/><br /><sub><b>agenticsymphony-tech</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=agenticsymphony-tech" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShahadatTest"><img src="https://avatars.githubusercontent.com/u/179203101?v=4?s=80" width="80px;" alt="ShahadatTest"/><br /><sub><b>ShahadatTest</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=ShahadatTest" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wolf4032"><img src="https://avatars.githubusercontent.com/u/144633223?v=4?s=80" width="80px;" alt="wolf4032"/><br /><sub><b>wolf4032</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=wolf4032" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
