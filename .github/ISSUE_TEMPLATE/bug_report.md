@@ -19,6 +19,11 @@ labels: bug
 
 ## `oops doctor`
 
+<!-- It shows paths under your home directory, and a config warning can repeat a
+     line of your config, such as a `secrets:` pattern. Look before you paste. /
+     ホームのパスが出るほか、設定の警告に `secrets:` のパターンなど設定の行がそのまま
+     出ることがあります。貼る前に確かめてください。 -->
+
 ```
 (paste the output / 出力を貼ってください)
 ```
