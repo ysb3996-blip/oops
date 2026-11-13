@@ -4,6 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## Unreleased
 
+- Fixed: `oops doctor` shows the shell's version again (`shell: zsh 5.9`). The version came from `ZSH_VERSION` / `BASH_VERSION`, which a shell never exports, so it was always missing; the init snippet now exports it ([#96](https://github.com/ysb3996-blip/oops/issues/96)). Reported by [@wolf4032](https://github.com/wolf4032) in [#93](https://github.com/ysb3996-blip/oops/pull/93). Open tabs pick it up after `exec $SHELL` or in a new tab.
 - Fixed: DigitalOcean API tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#103](https://github.com/ysb3996-blip/oops/pull/103).
 
 ## 0.6.0 - 2026-11-10

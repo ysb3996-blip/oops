@@ -335,6 +335,8 @@ if [[ $- == *i* ]] && [ -t 0 ] && [ -t 1 ] && [ -z "${OOPS_DISABLE:-}" ] &&
       # Exported so a nested shell on this tty continues the numbering.
       export __OOPS_SEQ
       export __OOPS_PID=$$
+      # Shell parameters are not exported; oops doctor reads this one.
+      export __OOPS_SHELL_VERSION=$BASH_VERSION
     fi
     if __oops_bp_present; then
       __oops_use_bp

@@ -53,8 +53,11 @@ module Oops
       "shell: #{[shell, version].compact.join(' ')}, hooks: #{hooks}"
     end
 
+    # Set by the init snippet: ZSH_VERSION, BASH_VERSION and fish's $version
+    # are shell parameters, never in the environment of a child process.
     def shell_version(env)
-      env["ZSH_VERSION"] || env["BASH_VERSION"]
+      version = env["__OOPS_SHELL_VERSION"].to_s
+      version.empty? ? nil : version
     end
 
     def clipboard_line(config, env, which)

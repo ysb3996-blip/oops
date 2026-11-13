@@ -4,6 +4,7 @@
 
 ## 未リリース
 
+- 修正: `oops doctor` がシェルのバージョンを出すようになりました（`shell: zsh 5.9`）。バージョンはシェルが export しない `ZSH_VERSION` / `BASH_VERSION` から読んでいたため、いつも抜けていました。初期化のスニペットが export するように直しています（[#96](https://github.com/ysb3996-blip/oops/issues/96)）。[@wolf4032](https://github.com/wolf4032) さんの報告（[#93](https://github.com/ysb3996-blip/oops/pull/93)）。開いているタブは `exec $SHELL` か新しいタブで反映されます。
 - 修正: DigitalOcean API トークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#103](https://github.com/ysb3996-blip/oops/pull/103)）。
 
 ## 0.6.0 - 2026-11-10
