@@ -417,7 +417,7 @@ rbenv rehash                         # rbenv を使う場合のみ
 
 ## コントリビュート
 
-バグ報告、アイデア、プルリクエストを歓迎します。[CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を読んでください。`good first issue` のラベルが付いた issue が、始めやすい入口です。プルリクエストには、テストと rubocop の結果、新しいタブでの動作確認を必ず貼ってください（[プルリクエストに必ず貼るもの](CONTRIBUTING.ja.md#プルリクエストに必ず貼るもの)）。
+バグ報告、アイデア、プルリクエストを歓迎します。[CONTRIBUTING.ja.md](CONTRIBUTING.ja.md) を読んでください。`good first issue` のラベルが付いた issue が、始めやすい入口です。大きさ順に並べた一覧は [New contributors: start here](https://github.com/ysb3996-blip/oops/issues/100) にあります。プルリクエストには、テストと rubocop の結果、新しいタブでの動作確認を必ず貼ってください（[プルリクエストに必ず貼るもの](CONTRIBUTING.ja.md#プルリクエストに必ず貼るもの)）。
 
 ## 貢献してくれた人たち
 

@@ -18,7 +18,7 @@ Mask anything private first. The [pull request template](.github/pull_request_te
 
 - **Report a bug** with the [bug report form](https://github.com/ysb3996-blip/oops/issues/new?template=bug_report.md). Run `oops doctor` and paste its output.
 - **Suggest an idea** with the [feature request form](https://github.com/ysb3996-blip/oops/issues/new?template=feature_request.md). Describe the situation first, then the change you have in mind.
-- **Pick up an issue.** Issues labeled [`good first issue`](https://github.com/ysb3996-blip/oops/labels/good%20first%20issue) are sized for a first contribution. Comment on one before you start so two people do not do the same work.
+- **Pick up an issue.** Issues labeled [`good first issue`](https://github.com/ysb3996-blip/oops/labels/good%20first%20issue) are sized for a first contribution; [New contributors: start here](https://github.com/ysb3996-blip/oops/issues/100) lists them by size. Comment on one before you start so two people do not do the same work.
 - **Improve the docs**, including the Japanese translations.
 
 For anything bigger than a small fix, open an issue first so we can agree on the approach before you write code.

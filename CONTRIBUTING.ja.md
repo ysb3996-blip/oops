@@ -18,7 +18,7 @@
 
 - **バグを報告する**: [バグ報告フォーム](https://github.com/ysb3996-blip/oops/issues/new?template=bug_report.md)を使います。`oops doctor` を実行して、その出力を貼ってください。
 - **アイデアを提案する**: [機能要望フォーム](https://github.com/ysb3996-blip/oops/issues/new?template=feature_request.md)を使います。変えたい内容より先に、困っている状況を書いてください。
-- **issue を引き受ける**: [`good first issue`](https://github.com/ysb3996-blip/oops/labels/good%20first%20issue) のラベルが付いた issue は、最初の貢献にちょうどよい大きさです。2 人が同じ作業をしないよう、始める前にコメントしてください。
+- **issue を引き受ける**: [`good first issue`](https://github.com/ysb3996-blip/oops/labels/good%20first%20issue) のラベルが付いた issue は、最初の貢献にちょうどよい大きさです。大きさ順の一覧は [New contributors: start here](https://github.com/ysb3996-blip/oops/issues/100) にあります。2 人が同じ作業をしないよう、始める前にコメントしてください。
 - **ドキュメントを良くする**: 日本語訳も含みます。
 
 小さな修正より大きな変更は、コードを書く前に issue を立てて、進め方を合意してください。
