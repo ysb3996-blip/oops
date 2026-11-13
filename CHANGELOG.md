@@ -2,10 +2,10 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
-## Unreleased
+## 0.7.0 - 2026-11-13
 
-- Added: fish users can install oops's hooks with fisher (`fisher install ysb3996-blip/oops`). The plugin file in `conf.d/` waits for the first prompt, when `config.fish` has put oops's Ruby on `PATH`, and does nothing (with a message) when `oops` is not installed ([#49](https://github.com/ysb3996-blip/oops/issues/49)).
 - Added: `oops pick` lists the last 10 commands of the tab with numbers (command masked, exit code, lines, start time) and copies the ones you type: one number, several (`1 3`) or a range (`2-4`). `-n N` lists N, and the formatting options, `--print`, `--json` and `--gist` work as with `oops N`. The list and the prompt go to stderr ([#41](https://github.com/ysb3996-blip/oops/issues/41)).
+- Added: fish users can install oops's hooks with fisher (`fisher install ysb3996-blip/oops`). The plugin file in `conf.d/` waits for the first prompt, when `config.fish` has put oops's Ruby on `PATH`, and does nothing (with a message) when `oops` is not installed ([#49](https://github.com/ysb3996-blip/oops/issues/49)).
 - Fixed: `oops doctor` shows the shell's version again (`shell: zsh 5.9`). The version came from `ZSH_VERSION` / `BASH_VERSION`, which a shell never exports, so it was always missing; the init snippet now exports it ([#96](https://github.com/ysb3996-blip/oops/issues/96)). Reported by [@wolf4032](https://github.com/wolf4032) in [#93](https://github.com/ysb3996-blip/oops/pull/93). Open tabs pick it up after `exec $SHELL` or in a new tab.
 - Fixed: DigitalOcean API tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#103](https://github.com/ysb3996-blip/oops/pull/103).
 

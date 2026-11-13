@@ -423,11 +423,11 @@ bundle exec exe/oops doctor
 
 ```sh
 gem build oops-cli.gemspec
-gem install ./oops-cli-0.6.0.gem     # ファイル名は lib/oops/version.rb に合わせる
+gem install ./oops-cli-0.7.0.gem     # ファイル名は lib/oops/version.rb に合わせる
 rbenv rehash                         # rbenv を使う場合のみ
 ```
 
-- gem は Ruby のバージョンごとに入ります。新しいタブが、インストールした Ruby とは別の Ruby を使っていると（たとえばリポジトリは 4.0.9 を指定しているのに、標準の Ruby が 3.3.5 の場合）、シェルの起動時に oops が見つからなくなります（bash では `bash: oops: command not found`、zsh では `command not found: oops` と出ます）。その Ruby でも `gem install` を実行してください（例: `RBENV_VERSION=3.3.5 gem install ./oops-cli-0.6.0.gem`）。
+- gem は Ruby のバージョンごとに入ります。新しいタブが、インストールした Ruby とは別の Ruby を使っていると（たとえばリポジトリは 4.0.9 を指定しているのに、標準の Ruby が 3.3.5 の場合）、シェルの起動時に oops が見つからなくなります（bash では `bash: oops: command not found`、zsh では `command not found: oops` と出ます）。その Ruby でも `gem install` を実行してください（例: `RBENV_VERSION=3.3.5 gem install ./oops-cli-0.7.0.gem`）。
 - 変更のたびに入れ直してください。インストールされた gem はコピーで、チェックアウトへのリンクではありません。
 - 削除するには `gem uninstall oops-cli` です。
 - `eval "$(oops init zsh)"` は、プロンプトで打つだけでなく rc ファイルに書いてください。記録されるシェルは rc ファイルを読み直すため、行がないとフックが入りません（`oops doctor` に `hooks: missing` と出ます）。
