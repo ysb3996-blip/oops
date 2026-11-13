@@ -175,7 +175,7 @@ class SecretsTest < Minitest::Test
 
   # Guards against quadratic matching; bounds are loose to avoid flakiness.
   def test_long_single_line_inputs_stay_linear
-    ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},'].each do |unit|
+    ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},', "dop_v1_#{'a' * 63} "].each do |unit|
       small = unit * (500_000 / unit.size)
       big = unit * (2_000_000 / unit.size)
       assert_operator elapsed { mask(small) }, :<, 2.0
