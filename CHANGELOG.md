@@ -4,6 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## Unreleased
 
+- Added: `oops pick` lists the last 10 commands of the tab with numbers (command masked, exit code, lines, start time) and copies the ones you type: one number, several (`1 3`) or a range (`2-4`). `-n N` lists N, and the formatting options, `--print`, `--json` and `--gist` work as with `oops N`. The list and the prompt go to stderr ([#41](https://github.com/ysb3996-blip/oops/issues/41)).
 - Fixed: DigitalOcean API tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#103](https://github.com/ysb3996-blip/oops/pull/103).
 
 ## 0.6.0 - 2026-11-10

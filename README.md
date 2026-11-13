@@ -106,6 +106,7 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | `oops 3` / `oops -n 3` | Copy the last 3 commands (oldest first) as one code block |
 | `oops err` | Copy the last command that exited non-zero, skipping over successful ones |
 | `oops err -n 2` | Copy the last 2 failed commands (oldest first), skipping over successful ones |
+| `oops pick` | List the last 10 commands with numbers and copy the ones you type ([below](#oops-pick)) |
 | `oops init zsh` / `oops init bash` / `oops init fish` | Print the shell snippet (for `eval`, or `\| source` in fish) |
 | `oops doctor` | Diagnose recording, hooks, clipboard, config and log size |
 | `oops pause` / `oops resume` | Stop and restart recording. While paused, nothing is written to disk |
@@ -114,11 +115,11 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | `oops record -- <shell>` | Internal: runs a shell under the recorder. The snippet calls this |
 | `oops --version`, `oops --help` | Version and usage |
 
-Options for `oops`, `oops N` and `oops err`:
+Options for `oops`, `oops N`, `oops err` and `oops pick`:
 
 | Option | What it does |
 |---|---|
-| `-n N` | Copy the last N commands (with `err`, the last N failed commands) |
+| `-n N` | Copy the last N commands (with `err`, the last N failed commands; with `pick`, list N) |
 | `--github` | Format for a GitHub issue or PR comment |
 | `--time` | Add the time each command started as a `# 2026-10-31 19:30:09 +09:00` line |
 | `--output-only` | Leave out the `$ command` line and copy only the output |
@@ -131,7 +132,7 @@ Options for `oops`, `oops N` and `oops err`:
 
 `oops` never copies itself: if the previous command was `oops`, you get the command before it.
 
-Exit codes: `0` copied (or printed with `--print` or `--json`, or uploaded with `--gist`), `1` nothing copied (not recording, no command yet, no failed command, paused, the clipboard command failed, or `gh` failed with `--gist`), `2` usage error.
+Exit codes: `0` copied (or printed with `--print` or `--json`, or uploaded with `--gist`), `1` nothing copied (not recording, no command yet, no failed command, nothing picked, paused, the clipboard command failed, or `gh` failed with `--gist`), `2` usage error.
 
 ### Default output
 
@@ -219,6 +220,21 @@ gist: https://gist.github.com/you/4f1e8c0b2d9a7e6f5c3b1a0d9e8f7c6b (1 lines)
 oops does not talk to GitHub itself: it runs `gh gist create` from the [GitHub CLI](https://cli.github.com), so you need `gh` installed and logged in once with `gh auth login`. The gist holds one file, `oops.md`, and its description is the first command line. It works with `N`, `err`, `-n`, `--github`, `--time` and `--output-only`.
 
 A secret gist is not listed or searchable, but anyone who has the URL can open it, so secrets are always masked: `--show-secrets` is a usage error with `--gist`, and so are `--print` and `--json`. Delete a gist you no longer need on gist.github.com or with `gh gist delete`. If no clipboard tool is found, the URL is still printed and oops warns that it was not copied.
+
+### `oops pick`
+
+`oops pick` lists the last 10 commands of this tab, oldest first, and asks which to copy:
+
+```
+$ oops pick
+1  $ bundle exec rake            (exit 1, 84 lines, 19:30)
+2  $ git status                  (exit 0, 6 lines, 19:31)
+3  $ curl -s localhost:3000/api  (exit 0, 1 line, 19:32)
+pick> 1 3
+copied: $ bundle exec rake (85 lines)
+```
+
+Type one number, several (`1 3`), or a range (`2-4`); they are copied in the order they ran, with the same formatting and masking as `oops 3`. An empty answer copies nothing. The list shows commands already masked. `-n 20` lists 20 instead, and the formatting options work as usual: `oops pick --github`, or `oops pick -p | less` (the list and the prompt go to stderr, so only the text reaches stdout).
 
 ### `oops status`
 

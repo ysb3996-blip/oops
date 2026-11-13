@@ -18,7 +18,7 @@ class CLITest < Minitest::Test
   def test_help_describes_command_count_option
     out = StringIO.new
     assert_equal 0, Oops::CLI.run(["--help"], stdout: out, stderr: StringIO.new)
-    assert_equal "Usage: oops [N | err] [-n N] [options]\n", out.string.lines.first
+    assert_equal "Usage: oops [N | err | pick] [-n N] [options]\n", out.string.lines.first
     assert_includes out.string, "-n N"
   end
 
@@ -108,10 +108,10 @@ class CLICopyTest < Minitest::Test
                                  output: output, dropped_bytes: 0, fullscreen: false))
   end
 
-  def run_cli(*argv, env: @env)
+  def run_cli(*argv, env: @env, stdin: StringIO.new)
     out = StringIO.new
     err = StringIO.new
-    status = Oops::CLI.run(argv, env: env, stdout: out, stderr: err)
+    status = Oops::CLI.run(argv, env: env, stdin: stdin, stdout: out, stderr: err)
     [status, out.string, err.string]
   end
 
@@ -170,6 +170,42 @@ class CLICopyTest < Minitest::Test
     assert_equal "```console\n$ good\nfine\n```\n", clip
     assert_equal 0, run_cli("err", "--github").first
     assert_equal "```console\n$ bad\nboom\n(exit 2)\n```\n", clip
+  end
+
+  def test_pick_lists_on_stderr_and_copies_the_chosen_commands_in_order
+    add("make", "built\r\n", exit: 2)
+    add("oops", "copied\r\n")
+    add("ls", "a\r\n")
+    add("pwd", "/x\r\n")
+    status, out, err = run_cli("pick", stdin: StringIO.new("3 1\n"))
+    assert_equal 0, status
+    assert_equal "copied: $ make (2 lines)\n", out
+    assert_match(/\A1  \$ make  \(exit 2, 1 line, \d\d:\d\d\)\n2  \$ ls    .*\n3  \$ pwd   .*\npick> \n\z/, err)
+    assert_equal "```\n$ make\nbuilt\n(exit 2)\n\n$ pwd\n/x\n```\n", clip
+  end
+
+  def test_pick_n_lists_that_many_and_print_keeps_stdout_for_the_text
+    add("c1", "one\r\n")
+    add("c2", "two\r\n")
+    add("c3", "three\r\n")
+    status, out, err = run_cli("pick", "-n", "2", "--print", stdin: StringIO.new("1"))
+    assert_equal 0, status
+    assert_equal "```\n$ c2\ntwo\n```\n", out
+    assert_equal 2, err.scan(/^\d  \$ /).size
+    refute File.exist?(@clip)
+  end
+
+  def test_pick_with_a_bad_or_no_answer_copies_nothing
+    add("c1", "one\r\n")
+    assert_equal 1, run_cli("pick", stdin: StringIO.new("2\n")).first
+    assert_equal 1, run_cli("pick", stdin: StringIO.new("")).first
+    assert_match(/oops: nothing picked\.\n\z/, run_cli("pick").last)
+    refute File.exist?(@clip)
+  end
+
+  def test_pick_takes_no_positional_count
+    add("c1", "one\r\n")
+    assert_equal [2, "", "oops: unexpected argument: 3\n"], run_cli("pick", "3")
   end
 
   def test_n_larger_than_history_copies_what_there_is

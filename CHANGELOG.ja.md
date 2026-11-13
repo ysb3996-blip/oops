@@ -4,6 +4,7 @@
 
 ## 未リリース
 
+- 追加: `oops pick` で、このタブの直近 10 コマンドを番号付き（マスク済みのコマンド・終了コード・行数・開始時刻）で並べ、打った番号のものをコピーできるようにしました。番号は 1 つ、複数（`1 3`）、範囲（`2-4`）で打てます。`-n N` で N 件並べ、整形のオプション・`--print`・`--json`・`--gist` は `oops N` と同じように使えます。一覧とプロンプトは標準エラーに出ます（[#41](https://github.com/ysb3996-blip/oops/issues/41)）。
 - 修正: DigitalOcean API トークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#103](https://github.com/ysb3996-blip/oops/pull/103)）。
 
 ## 0.6.0 - 2026-11-10

@@ -11,7 +11,7 @@ module Oops
 
     NO_CLIPBOARD = "no clipboard tool found (tried pbcopy, wl-copy, xclip, xsel, clip.exe, OSC 52).".freeze
     POSITIVE_INTEGER = /\A\d+\z/
-    CopyTarget = Data.define(:count, :failed_only)
+    CopyTarget = Data.define(:count, :failed_only, :pick)
     COUNT_REPEATED = "specify the command count only once (N or -n)".freeze
 
     # --json has its own shape, so the Markdown formatting options make no
@@ -49,9 +49,9 @@ module Oops
                     json: false, gist: false }
         count = nil
         parser = OptionParser.new do |o|
-          o.banner = "Usage: oops [N | err] [-n N] [options]\n       " \
+          o.banner = "Usage: oops [N | err | pick] [-n N] [options]\n       " \
                      "oops init <shell> | pause | resume | status | clear [--all] | doctor"
-          o.on("-n N", "Copy the last N commands (with err, last N failures)") do |v|
+          o.on("-n N", "Copy the last N commands (with err, last N failures; with pick, list N)") do |v|
             raise UsageError, COUNT_REPEATED if count
 
             count = positive(v, "-n")
@@ -106,16 +106,19 @@ module Oops
 
       # Count comes from either a positional N or -n N. "err" filters the
       # selection to failed commands; without a count, one command is copied.
+      # "pick" lists the last count commands (Picker::COUNT by default) and
+      # copies the ones the user chooses.
       def target(args, count:)
         raise UsageError, "unexpected argument: #{args[1]}" if args.size > 1
 
         arg = args.first
-        return CopyTarget.new(count: count || 1, failed_only: arg == "err") if arg.nil? || arg == "err"
+        return CopyTarget.new(count: count || Picker::COUNT, failed_only: false, pick: true) if arg == "pick"
+        return CopyTarget.new(count: count || 1, failed_only: arg == "err", pick: false) if arg.nil? || arg == "err"
 
         raise UsageError, "unknown command: #{arg}" unless arg.match?(/\A[+-]?\d/)
         raise UsageError, COUNT_REPEATED if count
 
-        CopyTarget.new(count: positive(arg, "N"), failed_only: false)
+        CopyTarget.new(count: positive(arg, "N"), failed_only: false, pick: false)
       end
 
       def copy(target, options)
@@ -128,6 +131,7 @@ module Oops
         raise Failure, (target.failed_only ? "no failed command found." : "no command found yet.") if records.empty?
 
         home = env["HOME"].to_s.empty? ? Dir.home : env["HOME"]
+        records = pick(records, config: config, home: home, show_secrets: options[:show_secrets]) if target.pick
         formatter = Formatter.new(config: config, home: home, **options.except(:print, :json, :gist))
         if options[:json]
           stdout.write formatter.json(records)
@@ -152,6 +156,22 @@ module Oops
         end
         stdout.puts "copied: $ #{report_command(result.command_line)} (#{report_counts(result)})"
         0
+      end
+
+      # `oops pick`: the list and the prompt go to stderr, so `oops pick -p`
+      # and `--json` keep stdout for the copied text. The answer is read from
+      # stdin, which also lets a script pipe the numbers in.
+      def pick(records, config:, home:, show_secrets:)
+        lister = Formatter.new(config: config, home: home, show_secrets: show_secrets)
+        stderr.puts Picker.menu(records, lister)
+        stderr.print "pick> "
+        stderr.flush
+        answer = stdin.gets
+        # A terminal echoes the answer and its newline; piped input does not.
+        stderr.puts unless stdin.tty?
+        records.values_at(*Picker.parse(answer, records.size).map { |n| n - 1 })
+      rescue Picker::Invalid => e
+        raise Failure, e.message
       end
 
       # The gist is made before the clipboard is tried, so a missing or failing

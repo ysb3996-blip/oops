@@ -106,6 +106,7 @@ oops init fish | source
 | `oops 3` / `oops -n 3` | 直前の 3 コマンドを（古い順に）1 つのコードブロックとしてコピーする |
 | `oops err` | 終了コードが 0 以外だった直近のコマンドをコピーする（成功したコマンドは飛ばす） |
 | `oops err -n 2` | 直近の失敗した 2 コマンドを古い順にコピーする（成功したコマンドは飛ばす） |
+| `oops pick` | 直近の 10 コマンドを番号付きで並べ、打った番号のものをコピーする（[下記](#oops-pick)） |
 | `oops init zsh` / `oops init bash` / `oops init fish` | シェルのスニペットを出力する（`eval` 用。fish は `\| source`） |
 | `oops doctor` | 記録・フック・クリップボード・設定・ログサイズを診断する |
 | `oops pause` / `oops resume` | 記録を止める／再開する。停止中は何もディスクに書かれない |
@@ -114,11 +115,11 @@ oops init fish | source
 | `oops record -- <shell>` | 内部用: 記録用プログラムの下でシェルを起動する。スニペットが呼び出す |
 | `oops --version`, `oops --help` | バージョンと使い方 |
 
-`oops`、`oops N`、`oops err` のオプション:
+`oops`、`oops N`、`oops err`、`oops pick` のオプション:
 
 | オプション | 内容 |
 |---|---|
-| `-n N` | 直前の N コマンドをコピーする（`err` と併用すると直近の失敗した N コマンド） |
+| `-n N` | 直前の N コマンドをコピーする（`err` と併用すると直近の失敗した N コマンド、`pick` と併用すると N 件を並べる） |
 | `--github` | GitHub の issue / PR コメント向けの書式にする |
 | `--time` | 各コマンドの開始時刻を `# 2026-10-31 19:30:09 +09:00` の行として付ける |
 | `--output-only` | `$ コマンド` の行を省き、出力だけをコピーする |
@@ -131,7 +132,7 @@ oops init fish | source
 
 `oops` 自身はコピー対象になりません。直前のコマンドが `oops` だった場合は、その前のコマンドがコピーされます。
 
-終了コード: `0` コピーした（または `--print`・`--json` で出力した、`--gist` で上げた）、`1` コピーしなかった（記録していない、まだコマンドがない、失敗したコマンドがない、一時停止中、クリップボードのコマンドが失敗、`--gist` で `gh` が失敗）、`2` 使い方の誤り。
+終了コード: `0` コピーした（または `--print`・`--json` で出力した、`--gist` で上げた）、`1` コピーしなかった（記録していない、まだコマンドがない、失敗したコマンドがない、何も選ばなかった、一時停止中、クリップボードのコマンドが失敗、`--gist` で `gh` が失敗）、`2` 使い方の誤り。
 
 ### 標準の出力
 
@@ -219,6 +220,21 @@ gist: https://gist.github.com/you/4f1e8c0b2d9a7e6f5c3b1a0d9e8f7c6b (1 lines)
 oops 自身は GitHub とやり取りしません。[GitHub CLI](https://cli.github.com) の `gh gist create` を呼ぶので、`gh` を入れて、一度 `gh auth login` でログインしておく必要があります。gist の中身は `oops.md` という1ファイルで、説明欄には1つ目のコマンドの行が入ります。`N`・`err`・`-n`・`--github`・`--time`・`--output-only` と併用できます。
 
 secret gist は一覧にも検索にも出ませんが、URL を知っていれば誰でも開けます。そのため秘密情報は必ずマスクします。`--show-secrets` を `--gist` と併用すると使い方の誤りになり、`--print`・`--json` との併用も同じです。要らなくなった gist は、gist.github.com か `gh gist delete` で消してください。クリップボードのツールが見つからないときも URL は表示し、コピーできなかったことを警告します。
+
+### `oops pick`
+
+`oops pick` は、このタブの直近 10 コマンドを古い順に番号付きで並べ、どれをコピーするか聞きます:
+
+```
+$ oops pick
+1  $ bundle exec rake            (exit 1, 84 lines, 19:30)
+2  $ git status                  (exit 0, 6 lines, 19:31)
+3  $ curl -s localhost:3000/api  (exit 0, 1 line, 19:32)
+pick> 1 3
+copied: $ bundle exec rake (85 lines)
+```
+
+番号を 1 つ、複数（`1 3`）、または範囲（`2-4`）で打つと、実行した順に、`oops 3` と同じ整形とマスクでコピーします。何も打たずに Enter を押すと何もコピーしません。一覧のコマンドもマスク済みです。`-n 20` で 20 件並べます。整形のオプションもそのまま使えます（`oops pick --github`、`oops pick -p | less` など。一覧と `pick>` は標準エラーに出るので、標準出力には本文だけが出ます）。
 
 ### `oops status`
 
