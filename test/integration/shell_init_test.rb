@@ -639,6 +639,53 @@ class ShellInitIntegrationTest < Minitest::Test
     assert_empty session_logs
   end
 
+  # --- fish plugin file (fisher) ---
+
+  FISH_PLUGIN = File.expand_path("../../conf.d/oops.fish", __dir__)
+
+  # As fisher installs it: the file is copied into conf.d, and oops is put on
+  # PATH by config.fish (as mise, rbenv or `brew shellenv` would), which runs
+  # after conf.d. An oops installed on this machine is taken off PATH, with
+  # fish and this Ruby kept reachable through links.
+  def write_fish_plugin(config: "set -gx PATH '#{File.dirname(EXE)}' $PATH\n")
+    FileUtils.mkdir_p("#{@home}/fishbin")
+    FileUtils.ln_s(self.class.sh_capture("command -v fish").strip, "#{@home}/fishbin/fish")
+    FileUtils.ln_s(RbConfig.ruby, "#{@home}/fishbin/ruby")
+    dirs = ENV.fetch("PATH", "").split(":").reject { |dir| File.executable?("#{dir}/oops") }
+    @env["PATH"] = ["#{@home}/fishbin", *dirs].join(":")
+    FileUtils.mkdir_p("#{@home}/cfg/fish/conf.d")
+    FileUtils.cp(FISH_PLUGIN, "#{@home}/cfg/fish/conf.d/oops.fish")
+    File.write("#{@home}/cfg/fish/config.fish", "#{config}function fish_prompt; printf '[st=%s]$ ' $status; end\n" \
+                                                "function fish_greeting; end\n")
+  end
+
+  def test_fish_plugin_records_with_oops_put_on_path_by_config_fish
+    skip_without_fish
+    write_fish_plugin
+    check_command_counts("fish", exit_two: "sh -c 'exit 2'")
+    assert_equal 1, session_logs.size
+  end
+
+  def test_fish_plugin_and_a_config_line_record_once
+    skip_without_fish
+    write_fish_plugin(config: "set -gx PATH '#{File.dirname(EXE)}' $PATH\n'#{EXE}' init fish | source\n")
+    spawn_shell("fish", "-i")
+    run_line("echo one")
+    run_line("echo two")
+    assert_equal 1, session_logs.size
+    assert_equal([["echo one", 1], ["echo two", 2]], records.map { |r| [r.cmd, r.seq] })
+  end
+
+  def test_fish_plugin_without_oops_says_so_and_leaves_the_shell_alone
+    skip_without_fish
+    write_fish_plugin(config: "")
+    spawn_shell("fish", "-i")
+    run_line("echo alive-(math 1 + 1)")
+    assert_match(/alive-2/, @out)
+    assert_includes @out, "oops: the oops command was not found"
+    assert_empty session_logs
+  end
+
   # --- terminal shell integration (Ghostty) ---
 
   # A stand-in for Ghostty's zsh integration. Like the real one it is injected

@@ -61,6 +61,18 @@ source ~/.oops/oops.plugin.zsh
 - `PATH` の Ruby が古いと、`oops: ... init zsh failed (oops needs Ruby 3.3 or later); recording disabled` と出て、記録なしで普通に起動します。
 - プラグインマネージャーは `main` ブランチから更新するので、最新のリリースより先の内容になることがあります。
 
+### fisher で入れる（fish）
+
+fish なら、[fisher](https://github.com/jorgebucaran/fisher) で小さなプラグインのファイルを入れられます。下の「シェルの設定」にある `config.fish` の 1 行の代わりになります。zsh のプラグインと違って oops 本体は入らないので、先に gem か Homebrew で oops を入れてください。
+
+```fish
+fisher install ysb3996-blip/oops
+```
+
+- ファイルは `~/.config/fish/conf.d/` に入ります。fish はこれを `config.fish` より先に読むので、`config.fish` が oops の Ruby を `PATH` に通し終わる（mise・rbenv・asdf・`brew shellenv`）最初のプロンプトまで待ってから動きます。そこでシェルを記録用に起動し直すため、タブを開いたときに `config.fish` が 2 回動きます。
+- その時点で `oops` が `PATH` に無いと、`oops: the oops command was not found; ...` と出て、記録なしで普通に起動します。
+- `config.fish` の `oops init fish | source` の行もそのまま使え、そちらが優先されます。両方は要りません。
+
 ### Claude Code で使う場合
 
 Claude Code を使っているなら、Claude Code の中で oops プラグインも入れてください。タブで最後に失敗したコマンドを、貼り付けなしで Claude が読めるようになります（[Claude Code のプラグイン](#claude-code-のプラグイン)を参照）。

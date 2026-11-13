@@ -61,6 +61,18 @@ source ~/.oops/oops.plugin.zsh
 - If the Ruby on `PATH` is too old, the shell prints `oops: ... init zsh failed (oops needs Ruby 3.3 or later); recording disabled` and starts as usual, without recording.
 - Plugin managers update from the `main` branch, which can be ahead of the latest release.
 
+### With fisher (fish)
+
+For fish, [fisher](https://github.com/jorgebucaran/fisher) can install a small plugin file that replaces the `config.fish` line below. Unlike the zsh plugin it does not bring oops itself: install the gem or the Homebrew formula first.
+
+```fish
+fisher install ysb3996-blip/oops
+```
+
+- The file goes into `~/.config/fish/conf.d/`, which fish reads before `config.fish`, so it waits for the first prompt, when `config.fish` has put oops's Ruby on `PATH` (mise, rbenv, asdf, `brew shellenv`). Then the shell starts again under the recorder, so `config.fish` runs twice at the start of a tab.
+- If `oops` is not on `PATH` by then, the shell prints `oops: the oops command was not found; ...` and starts as usual, without recording.
+- An `oops init fish | source` line in `config.fish` still works and takes precedence; you do not need both.
+
 ### For Claude Code
 
 If you use Claude Code, also install the oops plugin inside it, so Claude can read the last command that failed in your tab without you pasting it (see [Claude Code plugin](#claude-code-plugin)):
