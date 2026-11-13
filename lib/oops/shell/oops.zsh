@@ -86,6 +86,8 @@ if [[ -o interactive && -t 0 && -t 1 && -n "${TTY:-}" && -z "${OOPS_DISABLE:-}" 
       # Exported so a nested shell on this tty continues the numbering.
       export __OOPS_SEQ
       export __OOPS_PID=$$
+      # Shell parameters are not exported; oops doctor reads this one.
+      export __OOPS_SHELL_VERSION=$ZSH_VERSION
     fi
     add-zsh-hook preexec __oops_preexec
     add-zsh-hook precmd __oops_precmd

@@ -86,6 +86,8 @@ if status is-interactive; and test -t 1; and test -t 2; and not set -q OOPS_DISA
             # Exported so a nested shell on this tty continues the numbering.
             set -gx __OOPS_SEQ $__OOPS_SEQ
             set -gx __OOPS_PID $fish_pid
+            # $version is not exported; oops doctor reads this one.
+            set -gx __OOPS_SHELL_VERSION $version
         end
 
         # The shell this one replaced had Ghostty's integration (see above);

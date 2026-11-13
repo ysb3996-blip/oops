@@ -4,7 +4,8 @@ require "pty"
 class DoctorTest < Minitest::Test
   def setup
     @dir = Dir.mktmpdir
-    @env = { "HOME" => @dir, "SHELL" => "/bin/zsh", "ZSH_VERSION" => "5.9", "XDG_CONFIG_HOME" => File.join(@dir, "c") }
+    @env = { "HOME" => @dir, "SHELL" => "/bin/zsh", "__OOPS_SHELL_VERSION" => "5.9",
+             "XDG_CONFIG_HOME" => File.join(@dir, "c") }
   end
 
   def teardown
@@ -23,6 +24,13 @@ class DoctorTest < Minitest::Test
     assert_includes out, "sessions: 0 logs, 0.0 MB\n"
     assert_match(/^ruby: #{Regexp.escape(RUBY_VERSION)} /, out)
     assert_match(/^config: .*config.yml \(missing\)$/, out)
+  end
+
+  # A real tab has ZSH_VERSION only as a shell parameter, so it never reaches
+  # oops doctor; only the variable the snippet exports does.
+  def test_shell_version_comes_from_the_snippet_not_the_shell_parameter
+    env = @env.except("__OOPS_SHELL_VERSION").merge("ZSH_VERSION" => "5.9")
+    assert_includes report(env), "shell: zsh, hooks: missing\n"
   end
 
   def test_reports_recording_paused_and_sizes
