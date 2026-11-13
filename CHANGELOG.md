@@ -4,7 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## Unreleased
 
-- Fixed: DigitalOcean API tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
+- Fixed: DigitalOcean API tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#103](https://github.com/ysb3996-blip/oops/pull/103).
 
 ## 0.6.0 - 2026-11-10
 

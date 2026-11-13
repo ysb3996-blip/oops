@@ -4,7 +4,7 @@
 
 ## 未リリース
 
-- 修正: DigitalOcean API トークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
+- 修正: DigitalOcean API トークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#103](https://github.com/ysb3996-blip/oops/pull/103)）。
 
 ## 0.6.0 - 2026-11-10
 
