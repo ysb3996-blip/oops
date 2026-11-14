@@ -156,12 +156,14 @@ module Oops
     end
 
     # Newest count finished, non-oops records, oldest first. With failed_only,
-    # only records with a non-zero integer exit status count toward the limit.
-    def last(count, skip_oops: true, failed_only: false)
+    # only records with a non-zero integer exit status count toward the limit;
+    # with containing, only records whose command or output contain that text.
+    def last(count, skip_oops: true, failed_only: false, containing: nil)
       found = []
       each_backward do |r|
         next if r.exit.nil? || (skip_oops && r.oops_self?)
         next if failed_only && (!r.exit.is_a?(Integer) || r.exit.zero?)
+        next if containing && !r.contains?(containing)
 
         found << r
         :stop if found.size >= count

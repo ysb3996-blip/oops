@@ -33,6 +33,21 @@ class RecordTest < Minitest::Test
     assert_equal "/tmp/caf\uFFFD", back.cwd
   end
 
+  def test_contains_matches_the_command_or_the_output_ignoring_case
+    record = Oops::Record.new(cmd: "bundle exec rspec", output: "NoMethodError: undefined\r\n".b)
+    assert record.contains?("rspec")
+    assert record.contains?("nomethoderror")
+    assert record.contains?("RSPEC")
+    refute record.contains?("rails")
+  end
+
+  def test_contains_ignores_colors_and_bad_bytes_in_the_output
+    record = Oops::Record.new(cmd: "make", output: "\e[31mfai\e[1mled\e[0m \xFF\r\n".b)
+    assert record.contains?("failed")
+    refute record.contains?("[31m")
+    assert Oops::Record.new(cmd: "echo", output: "Größe\n".b).contains?("GRÖSSE")
+  end
+
   def test_oops_self
     assert Oops::Record.new(cmd: "oops err --github").oops_self?
     assert Oops::Record.new(cmd: "/opt/x/exe/oops err").oops_self?

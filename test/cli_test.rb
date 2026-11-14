@@ -18,7 +18,7 @@ class CLITest < Minitest::Test
   def test_help_describes_command_count_option
     out = StringIO.new
     assert_equal 0, Oops::CLI.run(["--help"], stdout: out, stderr: StringIO.new)
-    assert_equal "Usage: oops [N | err | pick] [-n N] [options]\n", out.string.lines.first
+    assert_equal "Usage: oops [N | err | pick | grep TEXT] [-n N] [options]\n", out.string.lines.first
     assert_includes out.string, "-n N"
   end
 
@@ -206,6 +206,45 @@ class CLICopyTest < Minitest::Test
   def test_pick_takes_no_positional_count
     add("c1", "one\r\n")
     assert_equal [2, "", "oops: unexpected argument: 3\n"], run_cli("pick", "3")
+  end
+
+  def test_grep_copies_the_newest_command_whose_command_or_output_contains_the_text
+    add("make test", "boom\r\n", exit: 2)
+    add("bundle exec rspec", "\e[31mNoMethodError\e[0m: undefined\r\n", exit: 1)
+    add("ls", "a\r\n")
+    assert_equal [0, "copied: $ bundle exec rspec (1 lines)\n", ""], run_cli("grep", "nomethoderror")
+    assert_equal [0, "copied: $ make test (1 lines)\n", ""], run_cli("grep", "MAKE")
+    assert_equal "```\n$ make test\nboom\n(exit 2)\n```\n", clip
+  end
+
+  def test_grep_n_copies_that_many_matches_and_joins_the_words
+    add("echo no such file", "no such file\r\n")
+    add("cat x", "cat: x: No such file or directory\r\n", exit: 1)
+    add("ls", "a\r\n")
+    status, out, = run_cli("grep", "-n", "5", "no", "such", "--print")
+    assert_equal 0, status
+    assert_equal "```\n$ echo no such file\nno such file\n\n$ cat x\ncat: x: No such file or directory\n" \
+                 "(exit 1)\n```\n", out
+  end
+
+  def test_grep_pick_lists_only_the_matches
+    add("make", "built\r\n")
+    add("ls", "a\r\n")
+    add("make lint", "ok\r\n")
+    status, out, err = run_cli("grep", "make", "--pick", stdin: StringIO.new("1\n"))
+    assert_equal 0, status
+    assert_equal "copied: $ make (1 lines)\n", out
+    assert_match(/\A1  \$ make       .*\n2  \$ make lint  .*\npick> \n\z/, err)
+  end
+
+  def test_grep_without_a_match_or_without_text
+    add("ls", "a\r\n")
+    assert_equal [1, "", "oops: no command containing \"zzz\" found.\n"], run_cli("grep", "zzz")
+    assert_equal [2, "", "oops: oops grep needs the text to search for\n"], run_cli("grep")
+    assert_equal [2, "", "oops: oops grep needs the text to search for\n"], run_cli("grep", "")
+    assert_equal [2, "", "oops: --pick works only with grep; use  oops pick  for the last commands\n"],
+                 run_cli("--pick")
+    refute File.exist?(@clip)
   end
 
   def test_n_larger_than_history_copies_what_there_is
