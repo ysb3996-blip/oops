@@ -5,6 +5,7 @@ English | [日本語](CHANGELOG.ja.md)
 ## Unreleased
 
 - Fixed: Hugging Face `hf_` access tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
+- Fixed: SendGrid API keys are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
 
 ## 0.7.0 - 2026-11-13
 

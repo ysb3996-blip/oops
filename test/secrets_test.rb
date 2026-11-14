@@ -141,6 +141,21 @@ class SecretsTest < Minitest::Test
     end
   end
 
+  def test_sendgrid_api_keys_masked
+    token = "SG.#{'Ab1_' * 5}Q-." + "#{'Cd4-' * 10}x_7"
+    assert_equal ["[secret]", 1], mask(token)
+    assert_equal ["sendgrid [secret] here", 1], mask("sendgrid #{token} here")
+  end
+
+  def test_sendgrid_api_key_near_misses_kept
+    prefix = "SG.#{'A' * 22}."
+    token = prefix + ("B" * 43)
+    ["SG.#{'A' * 21}.#{'B' * 43}", prefix + ("B" * 42),
+     prefix + ("B" * 44), "not#{token}", "#{token}_suffix"].each do |text|
+      assert_equal [text, 0], mask(text)
+    end
+  end
+
   def test_short_or_embedded_prefixes_are_not_tokens
     %w[sk-1 task-list-item-name-that-is-long-enough npm_run
        ask-me-anything-about-this-long-thing].each do |text|
@@ -190,7 +205,8 @@ class SecretsTest < Minitest::Test
   # Guards against quadratic matching; bounds are loose to avoid flakiness.
   def test_long_single_line_inputs_stay_linear
     ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},', "dop_v1_#{'a' * 63} ",
-     "hf_#{'A' * 100_000}"].each do |unit|
+     "hf_#{'A' * 100_000}",
+     "SG.#{'A' * 22}.#{'B' * 100_000}"].each do |unit|
       small = unit * (500_000 / unit.size)
       big = unit * (2_000_000 / unit.size)
       assert_operator elapsed { mask(small) }, :<, 2.0
