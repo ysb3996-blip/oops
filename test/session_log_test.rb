@@ -94,6 +94,19 @@ class SessionLogTest < Minitest::Test
     end
   end
 
+  def test_last_containing_counts_only_matching_records
+    with_log do |log|
+      log.append(rec(1, cmd: "make test"))
+      log.append(rec(2, cmd: "ls"))
+      log.append(rec(3, cmd: "oops grep make"))
+      log.append(rec(4, cmd: "make lint"))
+      log.append(rec(5, cmd: "pwd"))
+      assert_equal [4], log.last(1, containing: "MAKE").map(&:seq)
+      assert_equal [1, 4], log.last(5, containing: "make").map(&:seq)
+      assert_equal [], log.last(1, containing: "rake")
+    end
+  end
+
   def test_last_on_missing_file_is_empty
     with_log { |log| assert_equal [], log.last(3) }
   end

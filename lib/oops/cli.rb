@@ -11,7 +11,7 @@ module Oops
 
     NO_CLIPBOARD = "no clipboard tool found (tried pbcopy, wl-copy, xclip, xsel, clip.exe, OSC 52).".freeze
     POSITIVE_INTEGER = /\A\d+\z/
-    CopyTarget = Data.define(:count, :failed_only, :pick)
+    CopyTarget = Data.define(:count, :failed_only, :pick, :containing)
     COUNT_REPEATED = "specify the command count only once (N or -n)".freeze
 
     # --json has its own shape, so the Markdown formatting options make no
@@ -48,10 +48,12 @@ module Oops
         options = { github: false, show_secrets: false, time: false, output_only: false, print: false,
                     json: false, gist: false }
         count = nil
+        pick = false
         parser = OptionParser.new do |o|
-          o.banner = "Usage: oops [N | err | pick] [-n N] [options]\n       " \
+          o.banner = "Usage: oops [N | err | pick | grep TEXT] [-n N] [options]\n       " \
                      "oops init <shell> | pause | resume | status | clear [--all] | doctor"
-          o.on("-n N", "Copy the last N commands (with err, last N failures; with pick, list N)") do |v|
+          o.on("-n N", "Copy the last N commands (with err, last N failures; " \
+                       "with grep, last N matches; with pick, list N)") do |v|
             raise UsageError, COUNT_REPEATED if count
 
             count = positive(v, "-n")
@@ -63,6 +65,7 @@ module Oops
           o.on("-p", "--print", "Write the text to stdout instead of the clipboard") { options[:print] = true }
           o.on("--json", "Write the commands as JSON to stdout") { options[:json] = true }
           o.on("--gist", "Upload as a secret gist (needs gh) and copy its URL") { options[:gist] = true }
+          o.on("--pick", "With grep, list the matches and copy the ones you choose") { pick = true }
           o.on("-v", "--version", "Print version and exit") do
             stdout.puts "oops #{VERSION}"
             return 0
@@ -72,7 +75,7 @@ module Oops
             return 0
           end
         end
-        copy_target = target(parser.parse(argv), count: count)
+        copy_target = target(parser.parse(argv), count: count, pick: pick)
         check_conflicts(options)
         copy(copy_target, options)
       rescue OptionParser::ParseError, UsageError => e
@@ -107,18 +110,33 @@ module Oops
       # Count comes from either a positional N or -n N. "err" filters the
       # selection to failed commands; without a count, one command is copied.
       # "pick" lists the last count commands (Picker::COUNT by default) and
-      # copies the ones the user chooses.
-      def target(args, count:)
+      # copies the ones the user chooses. "grep TEXT" counts only commands
+      # whose command line or output contain TEXT; the words after grep are
+      # joined, so the text needs no quotes.
+      def target(args, count:, pick:)
+        return grep_target(args.drop(1), count: count, pick: pick) if args.first == "grep"
+        raise UsageError, "--pick works only with grep; use  oops pick  for the last commands" if pick
         raise UsageError, "unexpected argument: #{args[1]}" if args.size > 1
 
         arg = args.first
-        return CopyTarget.new(count: count || Picker::COUNT, failed_only: false, pick: true) if arg == "pick"
-        return CopyTarget.new(count: count || 1, failed_only: arg == "err", pick: false) if arg.nil? || arg == "err"
+        return copy_target(count: count || Picker::COUNT, pick: true) if arg == "pick"
+        return copy_target(count: count || 1, failed_only: arg == "err") if arg.nil? || arg == "err"
 
         raise UsageError, "unknown command: #{arg}" unless arg.match?(/\A[+-]?\d/)
         raise UsageError, COUNT_REPEATED if count
 
-        CopyTarget.new(count: positive(arg, "N"), failed_only: false, pick: false)
+        copy_target(count: positive(arg, "N"))
+      end
+
+      def grep_target(words, count:, pick:)
+        text = words.join(" ")
+        raise UsageError, "oops grep needs the text to search for" if text.empty?
+
+        copy_target(count: count || (pick ? Picker::COUNT : 1), pick: pick, containing: text)
+      end
+
+      def copy_target(count:, failed_only: false, pick: false, containing: nil)
+        CopyTarget.new(count: count, failed_only: failed_only, pick: pick, containing: containing)
       end
 
       def copy(target, options)
@@ -127,8 +145,8 @@ module Oops
 
         config = Config.load(env: env)
         config.warnings.each { |w| stderr.puts "oops: warning: #{w}" }
-        records = log.last(target.count, failed_only: target.failed_only)
-        raise Failure, (target.failed_only ? "no failed command found." : "no command found yet.") if records.empty?
+        records = log.last(target.count, failed_only: target.failed_only, containing: target.containing)
+        raise Failure, not_found(target) if records.empty?
 
         home = env["HOME"].to_s.empty? ? Dir.home : env["HOME"]
         records = pick(records, config: config, home: home, show_secrets: options[:show_secrets]) if target.pick
@@ -156,6 +174,13 @@ module Oops
         end
         stdout.puts "copied: $ #{report_command(result.command_line)} (#{report_counts(result)})"
         0
+      end
+
+      def not_found(target)
+        if target.containing then %(no command containing "#{target.containing}" found.)
+        elsif target.failed_only then "no failed command found."
+        else "no command found yet."
+        end
       end
 
       # `oops pick`: the list and the prompt go to stderr, so `oops pick -p`

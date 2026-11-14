@@ -4,6 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## Unreleased
 
+- Added: `oops grep TEXT` copies the last command whose command line or output contains `TEXT` (fixed text, case-insensitive, colors ignored), so a command older than `oops pick`'s 10 can be found. `-n N` copies the last N matches, `--pick` lists the matches to choose from, and the other options work as with `oops N` ([#112](https://github.com/ysb3996-blip/oops/issues/112)).
 - Fixed: Hugging Face `hf_` access tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
 - Fixed: SendGrid API keys are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
 

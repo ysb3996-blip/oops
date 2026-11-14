@@ -17,7 +17,21 @@ module Oops
 
       value.to_s.dup.force_encoding(Encoding::UTF_8).scrub
     end
-    private :utf8_clean
+
+    # Output without escape sequences; the strip is skipped when there is none.
+    def plain_output
+      raw = output.to_s
+      raw.include?("\e") ? Ansi.strip(raw.dup) : raw
+    end
+    private :utf8_clean, :plain_output
+
+    # Whether the command line or the output contains text, ignoring case.
+    # Colors are removed from the output first, so a word colored halfway
+    # through still matches.
+    def contains?(text)
+      needle = text.downcase(:fold)
+      [cmd, plain_output].any? { |s| utf8_clean(s).to_s.downcase(:fold).include?(needle) }
+    end
 
     def oops_self?
       cmd.to_s.match?(%r{\A\s*(\S*/)?oops(\s|\z)})

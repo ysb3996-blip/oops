@@ -119,6 +119,7 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | `oops err` | Copy the last command that exited non-zero, skipping over successful ones |
 | `oops err -n 2` | Copy the last 2 failed commands (oldest first), skipping over successful ones |
 | `oops pick` | List the last 10 commands with numbers and copy the ones you type ([below](#oops-pick)) |
+| `oops grep TEXT` | Copy the last command whose command line or output contains `TEXT`, ignoring case ([below](#oops-grep)) |
 | `oops init zsh` / `oops init bash` / `oops init fish` | Print the shell snippet (for `eval`, or `\| source` in fish) |
 | `oops doctor` | Diagnose recording, hooks, clipboard, config and log size |
 | `oops pause` / `oops resume` | Stop and restart recording. While paused, nothing is written to disk |
@@ -127,24 +128,25 @@ To turn oops off for one shell, start it with `OOPS_DISABLE=1` (for example `OOP
 | `oops record -- <shell>` | Internal: runs a shell under the recorder. The snippet calls this |
 | `oops --version`, `oops --help` | Version and usage |
 
-Options for `oops`, `oops N`, `oops err` and `oops pick`:
+Options for `oops`, `oops N`, `oops err`, `oops pick` and `oops grep`:
 
 | Option | What it does |
 |---|---|
-| `-n N` | Copy the last N commands (with `err`, the last N failed commands; with `pick`, list N) |
+| `-n N` | Copy the last N commands (with `err`, the last N failed commands; with `grep`, the last N matches; with `pick`, list N) |
 | `--github` | Format for a GitHub issue or PR comment |
 | `--time` | Add the time each command started as a `# 2026-10-31 19:30:09 +09:00` line |
 | `--output-only` | Leave out the `$ command` line and copy only the output |
 | `-p`, `--print` | Write the text to stdout instead of the clipboard (no `copied:` line) |
 | `--json` | Write the commands as JSON to stdout, for scripts and agents |
 | `--gist` | Upload the text as a secret gist with the [GitHub CLI](https://cli.github.com) and copy its URL ([below](#--gist)) |
+| `--pick` | With `grep`, list the matches with numbers and copy the ones you type, as `oops pick` does |
 | `--show-secrets` | Do not mask secrets and do not apply the replace table |
 
 `N` must be a positive integer. Specify the command count once, either as a positional `N` or with `-n N`; combining them or repeating `-n` is a usage error. If fewer matching commands are available, oops copies those it finds. `-n` can be combined with the formatting options above.
 
 `oops` never copies itself: if the previous command was `oops`, you get the command before it.
 
-Exit codes: `0` copied (or printed with `--print` or `--json`, or uploaded with `--gist`), `1` nothing copied (not recording, no command yet, no failed command, nothing picked, paused, the clipboard command failed, or `gh` failed with `--gist`), `2` usage error.
+Exit codes: `0` copied (or printed with `--print` or `--json`, or uploaded with `--gist`), `1` nothing copied (not recording, no command yet, no failed command, no command containing the text, nothing picked, paused, the clipboard command failed, or `gh` failed with `--gist`), `2` usage error.
 
 ### Default output
 
@@ -247,6 +249,27 @@ copied: $ bundle exec rake (85 lines)
 ```
 
 Type one number, several (`1 3`), or a range (`2-4`); they are copied in the order they ran, with the same formatting and masking as `oops 3`. An empty answer copies nothing. The list shows commands already masked. `-n 20` lists 20 instead, and the formatting options work as usual: `oops pick --github`, or `oops pick -p | less` (the list and the prompt go to stderr, so only the text reaches stdout).
+
+### `oops grep`
+
+`oops pick` only goes back 10 commands. To find an older one, search for a word from the command or from its output:
+
+```
+$ oops grep nomethoderror
+copied: $ bundle exec rspec (42 lines)
+```
+
+The text is matched as is (`.` and `*` are not special) and case does not matter; colors in the output are ignored. The words after `grep` are joined with spaces, so `oops grep no such file` needs no quotes; put `--` before text that starts with `-`. `-n 3` copies the last 3 matches, oldest first, and `--pick` lists up to 10 matches (or `-n N`) to choose from:
+
+```
+$ oops grep docker --pick
+1  $ docker compose up -d     (exit 0, 3 lines, 18:02)
+2  $ docker compose logs web  (exit 0, 120 lines, 18:40)
+pick> 2
+copied: $ docker compose logs web (120 lines)
+```
+
+The search covers this tab only. Commands are matched before masking, but what is copied or listed is masked as usual.
 
 ### `oops status`
 
