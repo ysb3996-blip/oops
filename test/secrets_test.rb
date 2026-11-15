@@ -141,6 +141,22 @@ class SecretsTest < Minitest::Test
     end
   end
 
+  def test_shopify_access_tokens_masked
+    %w[shpat shpca shppa].each do |prefix|
+      token = "#{prefix}_#{'Ab12' * 8}"
+      assert_equal ["[secret]", 1], mask(token)
+      assert_equal ["credential [secret] saved", 1], mask("credential #{token} saved")
+    end
+  end
+
+  def test_shopify_access_token_near_misses_kept
+    token = "shpat_#{'Ab12' * 8}"
+    ["shpat_#{'a' * 31}", "shpat_#{'a' * 31}_", "shpat_#{'a' * 31}-",
+     "not#{token}", "prefix_#{token}", "#{token}_suffix", "shpxx_#{'a' * 32}"].each do |text|
+      assert_equal [text, 0], mask(text)
+    end
+  end
+
   def test_sendgrid_api_keys_masked
     token = "SG.#{'Ab1_' * 5}Q-." + "#{'Cd4-' * 10}x_7"
     assert_equal ["[secret]", 1], mask(token)
@@ -206,7 +222,8 @@ class SecretsTest < Minitest::Test
   def test_long_single_line_inputs_stay_linear
     ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},', "dop_v1_#{'a' * 63} ",
      "hf_#{'A' * 100_000}",
-     "SG.#{'A' * 22}.#{'B' * 100_000}"].each do |unit|
+     "SG.#{'A' * 22}.#{'B' * 100_000}",
+     "shpat_#{'a' * 100_000}_suffix"].each do |unit|
       small = unit * (500_000 / unit.size)
       big = unit * (2_000_000 / unit.size)
       assert_operator elapsed { mask(small) }, :<, 2.0
