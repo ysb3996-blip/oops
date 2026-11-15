@@ -2,13 +2,13 @@
 
 [English](CHANGELOG.md) | 日本語
 
-## 未リリース
+## 0.8.0 - 2026-11-15
 
 - 追加: `oops grep TEXT` で、コマンドか出力に `TEXT` を含む直近のコマンドをコピーできるようにしました（文字はそのまま比べ、大文字小文字と出力の色は無視）。`oops pick` の 10 件より前のコマンドも探せます。`-n N` で一致した直近 N 件、`--pick` で一致したものを並べて選べ、ほかのオプションは `oops N` と同じように使えます（[#112](https://github.com/ysb3996-blip/oops/issues/112)）。
-- 修正: Sentry の組織認証トークン（`sntrys_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
-- 修正: Shopify のアクセストークン（`shpat_`、`shpca_`、`shppa_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
-- 修正: Hugging Face の `hf_` アクセストークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
-- 修正: SendGrid API キーを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
+- 修正: Sentry の組織認証トークン（`sntrys_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#115](https://github.com/ysb3996-blip/oops/pull/115)）。
+- 修正: Shopify のアクセストークン（`shpat_`、`shpca_`、`shppa_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#114](https://github.com/ysb3996-blip/oops/pull/114)）。
+- 修正: Hugging Face の `hf_` アクセストークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#101](https://github.com/ysb3996-blip/oops/pull/101)）。
+- 修正: SendGrid API キーを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#102](https://github.com/ysb3996-blip/oops/pull/102)）。
 
 ## 0.7.0 - 2026-11-13
 

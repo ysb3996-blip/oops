@@ -2,13 +2,13 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
-## Unreleased
+## 0.8.0 - 2026-11-15
 
 - Added: `oops grep TEXT` copies the last command whose command line or output contains `TEXT` (fixed text, case-insensitive, colors ignored), so a command older than `oops pick`'s 10 can be found. `-n N` copies the last N matches, `--pick` lists the matches to choose from, and the other options work as with `oops N` ([#112](https://github.com/ysb3996-blip/oops/issues/112)).
-- Fixed: Sentry organization authentication tokens (`sntrys_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
-- Fixed: Shopify access tokens (`shpat_`, `shpca_`, `shppa_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
-- Fixed: Hugging Face `hf_` access tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
-- Fixed: SendGrid API keys are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)).
+- Fixed: Sentry organization authentication tokens (`sntrys_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#115](https://github.com/ysb3996-blip/oops/pull/115).
+- Fixed: Shopify access tokens (`shpat_`, `shpca_`, `shppa_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#114](https://github.com/ysb3996-blip/oops/pull/114).
+- Fixed: Hugging Face `hf_` access tokens are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#101](https://github.com/ysb3996-blip/oops/pull/101).
+- Fixed: SendGrid API keys are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#102](https://github.com/ysb3996-blip/oops/pull/102).
 
 ## 0.7.0 - 2026-11-13
 
