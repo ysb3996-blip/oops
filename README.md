@@ -486,6 +486,7 @@ Thanks to everyone who has helped ([emoji key](https://allcontributors.org/docs/
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShahadatTest"><img src="https://avatars.githubusercontent.com/u/179203101?v=4&size=80" width="80px" height="80px" alt="ShahadatTest"/><br /><sub><b>ShahadatTest</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=ShahadatTest" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/wolf4032"><img src="https://avatars.githubusercontent.com/u/144633223?v=4&size=80" width="80px" height="80px" alt="wolf4032"/><br /><sub><b>wolf4032</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=wolf4032" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jdotc1"><img src="https://avatars.githubusercontent.com/u/138259519?v=4&size=80" width="80px" height="80px" alt="Jeff"/><br /><sub><b>Jeff</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=jdotc1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/isizono"><img src="https://avatars.githubusercontent.com/u/198435662?v=4&size=80" width="80px" height="80px" alt="isizono"/><br /><sub><b>isizono</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=isizono" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
