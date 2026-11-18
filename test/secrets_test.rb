@@ -269,6 +269,25 @@ class SecretsTest < Minitest::Test
   end
 
   # Guards against quadratic matching; bounds are loose to avoid flakiness.
+  # The shell removes the quotes before the command runs, so the output holds
+  # the token in one piece while the recorded command line does not.
+  def test_tokens_split_by_shell_quotes_masked
+    token = "ghp_#{'a' * 36}"
+    assert_equal ["echo [secret]", 1], mask(%(echo ghp_"#{'a' * 36}"))
+    assert_equal ["echo [secret]", 1], mask("echo ghp_'#{'a' * 36}'")
+    assert_equal ["echo [secret]", 1], mask("echo ghp_\\#{'a' * 36}")
+    assert_equal ["[secret] gh auth status", 1], mask(%(GH_TOKEN=gh"p_#{'a' * 36}" gh auth status))
+    assert_equal ["curl -d [secret] x", 1], mask(%(curl -d "#{token[0, 10]}""#{token[10..]}" x))
+  end
+
+  def test_quoted_words_without_a_split_token_kept
+    token = "ghp_#{'a' * 36}"
+    assert_equal [%(export T="[secret]"), 1], mask(%(export T="#{token}"))
+    assert_equal [%(echo 'ghp_' "short"), 0], mask(%(echo 'ghp_' "short"))
+    assert_equal [%(say "it's fine" \\\n), 0], mask(%(say "it's fine" \\\n))
+    assert_equal [%(grep -E 'sk-[a-z]+' "#{'x' * 30}"), 0], mask(%(grep -E 'sk-[a-z]+' "#{'x' * 30}"))
+  end
+
   def test_long_single_line_inputs_stay_linear
     ['password="', 'token="a" ', '{"api_key": "abc123","name":"x"},', "dop_v1_#{'a' * 63} ",
      "hf_#{'A' * 100_000}",
@@ -276,7 +295,8 @@ class SecretsTest < Minitest::Test
      "ntn_#{'A' * 100_000}",
      "SG.#{'A' * 22}.#{'B' * 100_000}",
      "shpat_#{'a' * 100_000}_suffix",
-     "sntrys_eyJ#{'A' * 100_000}_#{'x' * 43}"].each do |unit|
+     "sntrys_eyJ#{'A' * 100_000}_#{'x' * 43}",
+     %(ghp_"#{'a' * 100_000}"), %("'\\#{'a' * 100_000}), %(a" )].each do |unit|
       small = unit * (500_000 / unit.size)
       big = unit * (2_000_000 / unit.size)
       assert_operator elapsed { mask(small) }, :<, 2.0

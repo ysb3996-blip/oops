@@ -7,10 +7,9 @@ module Oops
     # Octet 0-255, used by the IPv4 pattern.
     OCTET = "(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)".freeze
 
-    # Order matters: specific token formats first, then URL userinfo before
-    # email, and the generic key/value rule last so it skips values that an
-    # earlier pattern already replaced.
-    BUILTIN = [
+    # Token formats with a fixed prefix. These are also tried on shell words
+    # with their quotes removed (see mask_split_tokens).
+    TOKEN_FORMATS = [
       /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/,                                   # AWS access key id
       /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_\w{20,})/,             # GitHub tokens
       /\bxox[abprs]-[A-Za-z0-9-]+/, # Slack tokens
@@ -28,8 +27,19 @@ module Oops
       }x, # Sentry org auth tokens
       /\bAIza[0-9A-Za-z_-]{35}/, # Google API keys
       /(?<![A-Za-z0-9_-])SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/, # SendGrid API keys
-      /\bnpm_[A-Za-z0-9]{36}/,                                          # npm tokens
-      %r{hooks\.slack\.com/services/(?<secret>[A-Za-z0-9/]+)},          # Slack webhook URLs
+      /\bnpm_[A-Za-z0-9]{36}/ # npm tokens
+    ].freeze
+
+    # A word that holds a quote or a backslash. The lookbehind lets it start
+    # only at the beginning of a word, so a long word is scanned once.
+    QUOTED_WORD = /(?<!\S)(?=\S*["'\\])\S+/
+
+    # Order matters: specific token formats first, then URL userinfo before
+    # email, and the generic key/value rule last so it skips values that an
+    # earlier pattern already replaced.
+    BUILTIN = [
+      *TOKEN_FORMATS,
+      %r{hooks\.slack\.com/services/(?<secret>[A-Za-z0-9/]+)}, # Slack webhook URLs
       /\beyJ[\w-]+\.[\w-]+\.[\w-]+/, # JWT
       %r{Authorization:[ \t]*(?:Bearer|Basic|token)[ \t]+(?<secret>[\w.~+/=-]+)}i,
       # Without an END line (cut off by head, a failed command or the capture
@@ -73,13 +83,27 @@ module Oops
     # Input is scrubbed (invalid UTF-8 bytes become U+FFFD) so regexps never
     # raise on arbitrary captured output; the returned copy is always valid.
     def mask(text, extra: [])
-      out = text.scrub
-      count = 0
+      out, count = mask_split_tokens(text.scrub)
       (extra + BUILTIN).each do |pattern|
         out = out.gsub(pattern) do
           count += 1
           replacement(Regexp.last_match)
         end
+      end
+      [out, count]
+    end
+
+    # A token split by shell quotes, such as ghp_"abc", only matches once the
+    # quotes are gone, so the whole word is replaced. Words where a format
+    # already matches in place are left to the patterns that keep the quotes.
+    def mask_split_tokens(text)
+      count = 0
+      out = text.gsub(QUOTED_WORD) do |word|
+        bare = word.delete(%q("'\\))
+        next word unless TOKEN_FORMATS.any? { |format| bare.match?(format) && !word.match?(format) }
+
+        count += 1
+        TOKEN
       end
       [out, count]
     end

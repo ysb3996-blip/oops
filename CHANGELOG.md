@@ -4,6 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## Unreleased
 
+- Fixed: a token split by shell quotes or a backslash, such as `ghp_"..."`, is masked in the captured command line; the whole word becomes `[secret]` ([#123](https://github.com/ysb3996-blip/oops/issues/123)).
 - Fixed: Notion integration tokens (`ntn_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#117](https://github.com/ysb3996-blip/oops/pull/117).
 - Fixed: Linear personal API keys (`lin_api_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#118](https://github.com/ysb3996-blip/oops/pull/118).
 - Fixed: the report line after `oops` and `oops --gist` says "1 line" and "1 secret masked" for a count of one, not "1 lines" and "1 secrets masked" ([#86](https://github.com/ysb3996-blip/oops/issues/86)). Contributed by [@isizono](https://github.com/isizono) in [#119](https://github.com/ysb3996-blip/oops/pull/119).
