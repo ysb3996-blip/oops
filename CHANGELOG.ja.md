@@ -2,11 +2,11 @@
 
 [English](CHANGELOG.md) | 日本語
 
-## Unreleased
+## 未リリース
 
-- 修正: Notion のインテグレーショントークン（`ntn_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
-- 修正: Linear の個人用 API キー（`lin_api_`）を、コピーするコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。
-- 修正: `oops` と `oops --gist` が表示する報告の行で、件数が 1 のときに "1 lines"・"1 secrets masked" と複数形になっていたのを "1 line"・"1 secret masked" に直しました（[#86](https://github.com/ysb3996-blip/oops/issues/86)）。
+- 修正: Notion のインテグレーショントークン（`ntn_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#117](https://github.com/ysb3996-blip/oops/pull/117)）。
+- 修正: Linear の個人用 API キー（`lin_api_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#118](https://github.com/ysb3996-blip/oops/pull/118)）。
+- 修正: `oops` と `oops --gist` が表示する報告の行で、件数が 1 のときに "1 lines"・"1 secrets masked" と複数形になっていたのを "1 line"・"1 secret masked" に直しました（[#86](https://github.com/ysb3996-blip/oops/issues/86)）。[@isizono](https://github.com/isizono) さんによる貢献（[#119](https://github.com/ysb3996-blip/oops/pull/119)）。
 
 ## 0.8.0 - 2026-11-15
 
