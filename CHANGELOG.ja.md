@@ -2,7 +2,7 @@
 
 [English](CHANGELOG.md) | 日本語
 
-## 未リリース
+## 0.8.1 - 2026-11-20
 
 - 修正: Supabase のサーバー専用 API キー（`sb_secret_`）を、記録されたコマンドと出力でマスクするようにしました。公開用キー（`sb_publishable_`）はマスクしません（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#125](https://github.com/ysb3996-blip/oops/pull/125)）。
 - 修正: `ghp_"..."` のようにシェルの引用符やバックスラッシュで途中が区切られたトークンを、記録されたコマンド行でもマスクするようにしました。その語は `[secret]` になり、前の `NAME=` や `--flag=` と、後ろの `;` `&` `|` `)` は残ります（[#123](https://github.com/ysb3996-blip/oops/issues/123)）。
