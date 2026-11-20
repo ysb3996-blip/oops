@@ -5,7 +5,7 @@
 ## 未リリース
 
 - 修正: Supabase のサーバー専用 API キー（`sb_secret_`）を、記録されたコマンドと出力でマスクするようにしました。公開用キー（`sb_publishable_`）はマスクしません（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#125](https://github.com/ysb3996-blip/oops/pull/125)）。
-- 修正: `ghp_"..."` のようにシェルの引用符やバックスラッシュで途中が区切られたトークンを、記録されたコマンド行でもマスクするようにしました。その語全体が `[secret]` になります（[#123](https://github.com/ysb3996-blip/oops/issues/123)）。
+- 修正: `ghp_"..."` のようにシェルの引用符やバックスラッシュで途中が区切られたトークンを、記録されたコマンド行でもマスクするようにしました。その語は `[secret]` になり、前の `NAME=` や `--flag=` と、後ろの `;` `&` `|` `)` は残ります（[#123](https://github.com/ysb3996-blip/oops/issues/123)）。
 - 修正: Notion のインテグレーショントークン（`ntn_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#117](https://github.com/ysb3996-blip/oops/pull/117)）。
 - 修正: Linear の個人用 API キー（`lin_api_`）を、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#118](https://github.com/ysb3996-blip/oops/pull/118)）。
 - 修正: `oops` と `oops --gist` が表示する報告の行で、件数が 1 のときに "1 lines"・"1 secrets masked" と複数形になっていたのを "1 line"・"1 secret masked" に直しました（[#86](https://github.com/ysb3996-blip/oops/issues/86)）。[@isizono](https://github.com/isizono) さんによる貢献（[#119](https://github.com/ysb3996-blip/oops/pull/119)）。

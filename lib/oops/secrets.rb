@@ -35,6 +35,11 @@ module Oops
     # only at the beginning of a word, so a long word is scanned once.
     QUOTED_WORD = /(?<!\S)(?=\S*["'\\])\S+/
 
+    # Shell syntax that may surround a split token and stays readable: a
+    # leading NAME= or --flag= and trailing ; & | ) characters.
+    ASSIGNMENT = /\A(?:--?[A-Za-z0-9-]+|[A-Za-z_]\w*)=/
+    TRAILING_OPERATORS = /\A[;&|)]+/
+
     # Order matters: specific token formats first, then URL userinfo before
     # email, and the generic key/value rule last so it skips values that an
     # earlier pattern already replaced.
@@ -95,18 +100,34 @@ module Oops
     end
 
     # A token split by shell quotes, such as ghp_"abc", only matches once the
-    # quotes are gone, so the whole word is replaced. Words where a format
-    # already matches in place are left to the patterns that keep the quotes.
+    # quotes are gone, so the word is replaced. A leading NAME= and trailing
+    # operators are kept when the token lies between them; otherwise the whole
+    # word goes. Words where a format already matches in place are left to the
+    # patterns that keep the quotes.
     def mask_split_tokens(text)
       count = 0
       out = text.gsub(QUOTED_WORD) do |word|
-        bare = word.delete(%q("'\\))
-        next word unless TOKEN_FORMATS.any? { |format| bare.match?(format) && !word.match?(format) }
-
-        count += 1
-        TOKEN
+        masked = mask_split_word(word)
+        count += 1 if masked != word
+        masked
       end
       [out, count]
+    end
+
+    def mask_split_word(word)
+      head = word[ASSIGNMENT] || ""
+      # Reversed so the anchored match reads only the trailing run.
+      tail = word.reverse[TRAILING_OPERATORS]&.reverse || ""
+      core = word[head.size...(word.size - tail.size)]
+      return "#{head}#{TOKEN}#{tail}" if split_token?(core)
+      return TOKEN if split_token?(word)
+
+      word
+    end
+
+    def split_token?(word)
+      bare = word.delete(%q("'\\))
+      TOKEN_FORMATS.any? { |format| bare.match?(format) && !word.match?(format) }
     end
 
     def replacement(match)
