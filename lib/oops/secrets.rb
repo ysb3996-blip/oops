@@ -45,6 +45,11 @@ module Oops
     # earlier pattern already replaced.
     BUILTIN = [
       *TOKEN_FORMATS,
+      # A base64url-encoded 17-20 digit Discord snowflake begins with M, N or O.
+      /
+        (?<![A-Za-z0-9_-])[MNO][A-Za-z0-9_-]{22,26}
+        \.[A-Za-z0-9_-]{6,7}\.[A-Za-z0-9_-]{27,38}(?![A-Za-z0-9_-])
+      /x,
       %r{hooks\.slack\.com/services/(?<secret>[A-Za-z0-9/]+)}, # Slack webhook URLs
       /\beyJ[\w-]+\.[\w-]+\.[\w-]+/, # JWT
       %r{Authorization:[ \t]*(?:Bearer|Basic|token)[ \t]+(?<secret>[\w.~+/=-]+)}i,

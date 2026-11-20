@@ -10,6 +10,25 @@ class SecretsTest < Minitest::Test
   def test_slack_token        = assert_equal ["[secret]", 1], mask("xoxb-1234-abcd")
   def test_jwt                = assert_equal ["[secret]", 1], mask("eyJhbGciOi.eyJzdWIi.SflKxwRJ")
 
+  def test_discord_bot_tokens_masked
+    encoded_id = "MTIzNDU2Nzg5MDEyMzQ1Njc4"
+    token = "#{encoded_id}.Ab12Cd.#{'aB3_' * 8}"
+    assert_equal ["[secret]", 1], mask(token)
+    assert_equal ["bot [secret] loaded", 1], mask("bot #{token} loaded")
+  end
+
+  def test_discord_bot_token_near_misses_kept
+    encoded_id = "MTIzNDU2Nzg5MDEyMzQ1Njc4"
+    encoded_text = "bm90X2FfZGlzY29yZF9pZF8wMDE"
+    token = "#{encoded_id}.Ab12Cd.#{'aB3_' * 8}"
+    ["#{encoded_text}.Ab12Cd.#{'aB3_' * 8}",
+     "#{encoded_id}.Ab12Cd.#{'x' * 26}",
+     "#{encoded_id}.Ab12Cd.#{'x' * 39}",
+     "prefix_#{token}", "#{token}_suffix"].each do |text|
+      assert_equal [text, 0], mask(text)
+    end
+  end
+
   def test_bearer_header
     assert_equal ["Authorization: Bearer [secret]", 1], mask("Authorization: Bearer abc.def")
   end
@@ -329,6 +348,7 @@ class SecretsTest < Minitest::Test
      "SG.#{'A' * 22}.#{'B' * 100_000}",
      "shpat_#{'a' * 100_000}_suffix",
      "sntrys_eyJ#{'A' * 100_000}_#{'x' * 43}",
+     "MTIzNDU2Nzg5MDEyMzQ1Njc4.Ab12Cd.#{'x' * 100_000}",
      %(ghp_"#{'a' * 100_000}"), %("'\\#{'a' * 100_000}), %(a" ),
      %(K=ghp_"#{'a' * 100_000}";), %(a"#{';' * 100_000}b)].each do |unit|
       small = unit * (500_000 / unit.size)
