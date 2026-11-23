@@ -2,7 +2,7 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
-## 0.8.1 - 2026-11-20
+## 0.8.1 - 2026-11-23
 
 - Fixed: Discord bot tokens in the legacy three-segment format are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#121](https://github.com/ysb3996-blip/oops/pull/121).
 - Fixed: Supabase server-only API keys (`sb_secret_`) are masked in captured commands and output, while publishable keys (`sb_publishable_`) stay visible ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#125](https://github.com/ysb3996-blip/oops/pull/125).

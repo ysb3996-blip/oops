@@ -2,7 +2,7 @@
 
 [English](CHANGELOG.md) | 日本語
 
-## 0.8.1 - 2026-11-20
+## 0.8.1 - 2026-11-23
 
 - 修正: Discord の従来の 3 部構成の bot トークンを、記録されたコマンドと出力でマスクするようにしました（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#121](https://github.com/ysb3996-blip/oops/pull/121)）。
 - 修正: Supabase のサーバー専用 API キー（`sb_secret_`）を、記録されたコマンドと出力でマスクするようにしました。公開用キー（`sb_publishable_`）はマスクしません（[#15](https://github.com/ysb3996-blip/oops/issues/15)）。[@jdotc1](https://github.com/jdotc1) さんによる貢献（[#125](https://github.com/ysb3996-blip/oops/pull/125)）。
