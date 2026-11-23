@@ -4,6 +4,7 @@ English | [日本語](CHANGELOG.ja.md)
 
 ## 0.8.1 - 2026-11-20
 
+- Fixed: Discord bot tokens in the legacy three-segment format are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#121](https://github.com/ysb3996-blip/oops/pull/121).
 - Fixed: Supabase server-only API keys (`sb_secret_`) are masked in captured commands and output, while publishable keys (`sb_publishable_`) stay visible ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#125](https://github.com/ysb3996-blip/oops/pull/125).
 - Fixed: a token split by shell quotes or a backslash, such as `ghp_"..."`, is masked in the captured command line. The word becomes `[secret]`, keeping a leading `NAME=` or `--flag=` and trailing `;`, `&`, `|` or `)` ([#123](https://github.com/ysb3996-blip/oops/issues/123)).
 - Fixed: Notion integration tokens (`ntn_`) are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#117](https://github.com/ysb3996-blip/oops/pull/117).
