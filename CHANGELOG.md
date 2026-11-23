@@ -2,6 +2,10 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
+## Unreleased
+
+- Added: with `--print`, oops writes `oops: N secrets masked` to stderr when at least one secret was masked, so the notice is kept when stdout is redirected or piped ([#61](https://github.com/ysb3996-blip/oops/issues/61)). stdout is unchanged.
+
 ## 0.8.1 - 2026-11-23
 
 - Fixed: Discord bot tokens in the legacy three-segment format are masked in captured commands and output ([#15](https://github.com/ysb3996-blip/oops/issues/15)). Contributed by [@jdotc1](https://github.com/jdotc1) in [#121](https://github.com/ysb3996-blip/oops/pull/121).
