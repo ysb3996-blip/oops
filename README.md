@@ -136,7 +136,7 @@ Options for `oops`, `oops N`, `oops err`, `oops pick` and `oops grep`:
 | `--github` | Format for a GitHub issue or PR comment |
 | `--time` | Add the time each command started as a `# 2026-10-31 19:30:09 +09:00` line |
 | `--output-only` | Leave out the `$ command` line and copy only the output |
-| `-p`, `--print` | Write the text to stdout instead of the clipboard (no `copied:` line) |
+| `-p`, `--print` | Write the text to stdout instead of the clipboard (no `copied:` line; the masked count, if any, goes to stderr) |
 | `--json` | Write the commands as JSON to stdout, for scripts and agents |
 | `--gist` | Upload the text as a secret gist with the [GitHub CLI](https://cli.github.com) and copy its URL ([below](#--gist)) |
 | `--pick` | With `grep`, list the matches with numbers and copy the ones you type, as `oops pick` does |
