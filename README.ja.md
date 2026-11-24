@@ -488,6 +488,9 @@ rbenv rehash                         # rbenv を使う場合のみ
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jdotc1"><img src="https://avatars.githubusercontent.com/u/138259519?v=4&size=80" width="80px" height="80px" alt="Jeff"/><br /><sub><b>Jeff</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=jdotc1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/isizono"><img src="https://avatars.githubusercontent.com/u/198435662?v=4&size=80" width="80px" height="80px" alt="isizono"/><br /><sub><b>isizono</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=isizono" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jay23606"><img src="https://avatars.githubusercontent.com/u/4602056?v=4&size=80" width="80px" height="80px" alt="Jay"/><br /><sub><b>Jay</b></sub></a><br /><a href="https://github.com/ysb3996-blip/oops/commits?author=jay23606" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
