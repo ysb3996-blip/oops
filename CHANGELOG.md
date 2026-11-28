@@ -2,7 +2,7 @@
 
 English | [日本語](CHANGELOG.ja.md)
 
-## Unreleased
+## 0.8.2 - 2026-11-28
 
 - Added: with `--print`, oops writes `oops: N secrets masked` to stderr when at least one secret was masked, so the notice is kept when stdout is redirected or piped ([#61](https://github.com/ysb3996-blip/oops/issues/61)). stdout is unchanged. Contributed by [@jay23606](https://github.com/jay23606) in [#128](https://github.com/ysb3996-blip/oops/pull/128).
 

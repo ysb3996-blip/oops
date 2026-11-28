@@ -2,7 +2,7 @@
 
 [English](CHANGELOG.md) | 日本語
 
-## 未リリース
+## 0.8.2 - 2026-11-28
 
 - 追加: `--print` のとき、1 件以上マスクしたら `oops: N secrets masked` を標準エラーに出すようにしました。標準出力を別のファイルやパイプに流しても、この知らせが残ります（[#61](https://github.com/ysb3996-blip/oops/issues/61)）。標準出力は変わりません。[@jay23606](https://github.com/jay23606) さんによる貢献（[#128](https://github.com/ysb3996-blip/oops/pull/128)）。
 
