@@ -102,6 +102,41 @@ class DoctorTest < Minitest::Test
     refute_includes bash_report("#{INIT}PROMPT_COMMAND=\"$PROMPT_COMMAND; y\"\n"), "warning"
   end
 
+  # A config whose methods raise, to reach the best-effort rescues.
+  BrokenConfig = Struct.new(:error) do
+    def clipboard = raise(error)
+    def warnings = raise(error)
+  end
+
+  def test_a_failing_check_is_reported_and_the_rest_still_runs
+    out = report(config: BrokenConfig.new(RuntimeError.new("boom")))
+    assert_includes out, "clipboard: unknown (boom)\n"
+    assert_includes out, "config: unknown (boom)\n"
+    assert_match(/^ruby: /, out)
+  end
+
+  def test_unreadable_sessions_dir_and_bashrc_do_not_raise
+    skip "root ignores file permissions" if Process.uid.zero?
+    sd = File.join(@dir, "s")
+    FileUtils.mkdir_p(sd)
+    rc = File.join(@dir, ".bashrc")
+    File.write(rc, "#{INIT}trap 'x' DEBUG\n")
+    File.chmod(0o000, sd)
+    File.chmod(0o000, rc)
+    out = report(@env.merge("SHELL" => "/bin/bash"))
+    assert_includes out, "sessions: unreadable\n"
+    refute_includes out, "warning"
+  ensure
+    File.chmod(0o700, sd) if sd && File.exist?(sd)
+    File.chmod(0o600, rc) if rc && File.exist?(rc)
+  end
+
+  def test_bash_warnings_never_raise
+    out = report(@env.merge("SHELL" => "/bin/bash", "HOME" => 1))
+    refute_includes out, "warning"
+    assert_match(/^ruby: /, out)
+  end
+
   def test_not_the_recorded_tty_names_both_ttys
     log = File.join(@dir, "b.jsonl")
     File.write(log, "")
